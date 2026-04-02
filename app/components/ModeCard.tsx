@@ -31,7 +31,7 @@ export default function ModeCard({
     <Link href={`/modes/${slug}`} className="block">
       <div className="mode-card">
         <div className="mode-card-image">
-          <Image src={image} alt={title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+          <Image src={image} alt={title} fill className="object-contain" sizes="(max-width: 768px) 100vw, 33vw" />
           <span className={`mode-badge ${badgeClass}`}>{categoryLabel}</span>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-3 left-4">

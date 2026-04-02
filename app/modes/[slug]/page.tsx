@@ -68,8 +68,8 @@ export default async function ModeDetailPage({
         </Link>
 
         {/* Hero Image */}
-        <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden mb-8">
-          <Image src={mode.image} alt={mode.title} fill className="object-cover" priority />
+        <div className="relative w-full h-72 md:h-96 rounded-2xl overflow-hidden mb-8" style={{ background: "#1a1a2e" }}>
+          <Image src={mode.image} alt={mode.title} fill className="object-contain" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute bottom-6 left-6">
             <span
@@ -115,8 +115,8 @@ export default async function ModeDetailPage({
             {details.insideImage && (
               <div className="glass-card p-6">
                 <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>In-Game Preview</h2>
-                <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden">
-                  <Image src={details.insideImage} alt={`${mode.title} in-game`} fill className="object-cover" />
+                <div className="relative w-full h-72 md:h-96 rounded-xl overflow-hidden" style={{ background: "#1a1a2e" }}>
+                  <Image src={details.insideImage} alt={`${mode.title} in-game`} fill className="object-contain" />
                 </div>
               </div>
             )}
