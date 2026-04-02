@@ -102,9 +102,9 @@ function FAQItem({ q, a }: { q: string; a: string }) {
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-5 text-left"
-        style={{ background: open ? "var(--bg-card-hover)" : "var(--bg-card)" }}
+        style={{ background: open ? "var(--bg-secondary)" : "var(--bg-card)" }}
       >
-        <span className="font-semibold text-sm md:text-base text-white pr-4">{q}</span>
+        <span className="font-semibold text-sm md:text-base pr-4" style={{ color: "var(--text-primary)" }}>{q}</span>
         <svg
           className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
           style={{ color: "var(--accent-primary)" }}
@@ -130,10 +130,6 @@ export default function FAQPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6"
-            style={{ background: "rgba(168,85,247,0.15)", color: "var(--accent-purple)", border: "1px solid rgba(168,85,247,0.3)" }}>
-            ❓ FAQ
-          </span>
           <h1 className="section-heading">
             Frequently Asked <span className="fire-text">Questions</span>
           </h1>
@@ -148,7 +144,7 @@ export default function FAQPage() {
             <div key={cat.category}>
               <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-6 rounded-full" style={{ background: "var(--gradient-fire)" }} />
-                <span className="text-white">{cat.category}</span>
+                <span style={{ color: "var(--text-primary)" }}>{cat.category}</span>
               </h2>
               <div className="space-y-3">
                 {cat.questions.map((faq) => (
@@ -161,7 +157,7 @@ export default function FAQPage() {
 
         {/* CTA */}
         <div className="mt-16 text-center glass-card p-8">
-          <h3 className="text-xl font-bold mb-3 text-white">Still have questions?</h3>
+          <h3 className="text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>Still have questions?</h3>
           <p className="mb-4 text-sm" style={{ color: "var(--text-secondary)" }}>
             Can&apos;t find what you&apos;re looking for? Reach out to our support team.
           </p>

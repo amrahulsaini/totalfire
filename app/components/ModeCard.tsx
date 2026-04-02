@@ -35,7 +35,7 @@ export default function ModeCard({
           <span className={`mode-badge ${badgeClass}`}>{categoryLabel}</span>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-3 left-4">
-            <h3 className="text-lg font-bold text-white">{title}</h3>
+            <h3 className="text-lg font-bold text-white drop-shadow-lg">{title}</h3>
           </div>
         </div>
         <div className="p-5 space-y-3">
@@ -51,19 +51,19 @@ export default function ModeCard({
           <div className="flex flex-wrap gap-2">
             {perKill && (
               <span className="text-xs px-3 py-1 rounded-full font-semibold"
-                style={{ background: "rgba(255,70,85,0.15)", color: "var(--accent-primary)" }}>
+                style={{ background: "rgba(230,57,70,0.1)", color: "var(--accent-primary)" }}>
                 ₹{perKill}/Kill
               </span>
             )}
             {winPrize && (
               <span className="text-xs px-3 py-1 rounded-full font-semibold"
-                style={{ background: "rgba(0,255,136,0.15)", color: "var(--accent-green)" }}>
+                style={{ background: "rgba(42,157,143,0.1)", color: "var(--accent-green)" }}>
                 Win: {winPrize}
               </span>
             )}
             {prizePool && (
               <span className="text-xs px-3 py-1 rounded-full font-semibold"
-                style={{ background: "rgba(168,85,247,0.12)", color: "var(--accent-purple)" }}>
+                style={{ background: "rgba(108,71,160,0.1)", color: "var(--accent-purple)" }}>
                 Pool: ₹{prizePool}
               </span>
             )}

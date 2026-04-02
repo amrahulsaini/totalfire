@@ -52,7 +52,7 @@ export default function Home() {
               <div key={s.step} className="text-center">
                 <div className="text-4xl mb-4">{s.icon}</div>
                 <div className="text-xs font-bold mb-2" style={{ color: "var(--accent-primary)" }}>STEP {s.step}</div>
-                <h3 className="text-xl font-bold mb-2 text-white">{s.title}</h3>
+                <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>{s.title}</h3>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{s.desc}</p>
               </div>
             ))}
@@ -61,16 +61,16 @@ export default function Home() {
       </section>
 
       {/* CTA Banner */}
-      <section className="py-20 relative overflow-hidden" style={{ background: "var(--bg-card)" }}>
+      <section className="py-20 relative overflow-hidden" style={{ background: "#1a1a2e" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-20"
             style={{ background: "var(--accent-primary)", filter: "blur(120px)" }} />
         </div>
         <div className="max-w-3xl mx-auto text-center px-4 relative z-10">
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4">
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-white">
             Ready to <span className="fire-text">Dominate</span>?
           </h2>
-          <p className="text-lg mb-8" style={{ color: "var(--text-secondary)" }}>
+          <p className="text-lg mb-8 text-gray-300">
             Join thousands of gamers competing for real rewards. Your next win is just a click away.
           </p>
           <Link href="/modes" className="fire-btn text-lg !py-4 !px-12">

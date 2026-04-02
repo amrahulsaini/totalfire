@@ -59,7 +59,7 @@ export default function FeaturesSection() {
               <div className="feature-icon mb-4" style={{ background: `${feature.color}15` }}>
                 {feature.icon}
               </div>
-              <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
+              <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>{feature.title}</h3>
               <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                 {feature.description}
               </p>

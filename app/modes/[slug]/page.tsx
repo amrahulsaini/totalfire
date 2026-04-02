@@ -58,7 +58,7 @@ export default async function ModeDetailPage({
         {/* Back Button */}
         <Link
           href="/modes"
-          className="inline-flex items-center gap-2 mb-8 text-sm font-medium transition-colors hover:text-white"
+          className="inline-flex items-center gap-2 mb-8 text-sm font-medium transition-colors"
           style={{ color: "var(--text-secondary)" }}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@ export default async function ModeDetailPage({
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
             <div className="glass-card p-6">
-              <h2 className="text-xl font-bold mb-4 text-white">About This Mode</h2>
+              <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>About This Mode</h2>
               <p className="leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                 {details.fullDescription}
               </p>
@@ -95,7 +95,7 @@ export default async function ModeDetailPage({
 
             {/* Rules */}
             <div className="glass-card p-6">
-              <h2 className="text-xl font-bold mb-4 text-white">Rules & Guidelines</h2>
+              <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Rules & Guidelines</h2>
               <ul className="space-y-3">
                 {details.rules.map((rule, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "var(--text-secondary)" }}>
@@ -114,7 +114,7 @@ export default async function ModeDetailPage({
             {/* In-App Screenshot */}
             {details.insideImage && (
               <div className="glass-card p-6">
-                <h2 className="text-xl font-bold mb-4 text-white">In-Game Preview</h2>
+                <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>In-Game Preview</h2>
                 <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden">
                   <Image src={details.insideImage} alt={`${mode.title} in-game`} fill className="object-cover" />
                 </div>
@@ -127,13 +127,13 @@ export default async function ModeDetailPage({
             {/* Reward Breakdown */}
             <div className="glass-card overflow-hidden">
               <div className="p-4" style={{ background: `${badgeColor}15`, borderBottom: "1px solid var(--border-color)" }}>
-                <h3 className="font-bold text-white text-center">Reward Breakdown</h3>
+                <h3 className="font-bold text-center" style={{ color: "var(--text-primary)" }}>Reward Breakdown</h3>
               </div>
               <div>
                 {details.rewardBreakdown.map((item) => (
                   <div key={item.label} className="prize-row">
                     <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{item.label}</span>
-                    <span className="text-sm font-bold text-right text-white">{item.value}</span>
+                    <span className="text-sm font-bold text-right" style={{ color: "var(--text-primary)" }}>{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -143,31 +143,31 @@ export default async function ModeDetailPage({
             <div className="glass-card p-5 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(0,212,255,0.15)" }}>
+                  style={{ background: "rgba(29,53,87,0.08)" }}>
                   🔒
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">Secured by Razorpay</p>
+                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Secured by Razorpay</p>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>100% safe transactions</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(255,70,85,0.15)" }}>
+                  style={{ background: "rgba(230,57,70,0.08)" }}>
                   ❌
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">No Refunds</p>
+                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>No Refunds</p>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>Entry fees are non-refundable</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(0,255,136,0.15)" }}>
+                  style={{ background: "rgba(42,157,143,0.08)" }}>
                   🎯
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">Skill-Based</p>
+                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Skill-Based</p>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>Earnings based on performance</p>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export default async function ModeDetailPage({
 
             {/* Join CTA */}
             <div className="glass-card p-6 text-center animate-pulse-glow">
-              <p className="text-2xl font-extrabold text-white mb-1">₹{mode.entryFee}</p>
+              <p className="text-2xl font-extrabold mb-1" style={{ color: "var(--text-primary)" }}>₹{mode.entryFee}</p>
               <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>per player entry fee</p>
               <button className="fire-btn w-full justify-center text-lg !py-3">
                 Join Tournament
