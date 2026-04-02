@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Mail } from "lucide-react";
 
 const faqs = [
   {
@@ -161,8 +162,8 @@ export default function FAQPage() {
           <p className="mb-4 text-sm" style={{ color: "var(--text-secondary)" }}>
             Can&apos;t find what you&apos;re looking for? Reach out to our support team.
           </p>
-          <a href="mailto:team@totalfire.in" className="fire-btn">
-            📧 Email team@totalfire.in
+          <a href="mailto:team@totalfire.in" className="fire-btn inline-flex items-center gap-2">
+            <Mail size={16} /> Email team@totalfire.in
           </a>
         </div>
       </div>

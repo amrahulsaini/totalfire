@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Mail, Clock, Zap, Lock, XCircle, Target, DollarSign } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -26,7 +27,7 @@ export default function ContactPage() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
                   style={{ background: "rgba(230,57,70,0.08)" }}>
-                  📧
+                  <Mail size={20} style={{ color: "var(--accent-primary)" }} />
                 </div>
                 <div>
                   <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>Email Us</h3>
@@ -46,7 +47,7 @@ export default function ContactPage() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
                   style={{ background: "rgba(29,53,87,0.08)" }}>
-                  🕐
+                  <Clock size={20} style={{ color: "var(--accent-blue)" }} />
                 </div>
                 <div>
                   <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>Support Hours</h3>
@@ -62,17 +63,17 @@ export default function ContactPage() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
                   style={{ background: "rgba(108,71,160,0.08)" }}>
-                  ⚡
+                  <Zap size={20} style={{ color: "var(--accent-purple)" }} />
                 </div>
                 <div>
                   <h3 className="font-bold" style={{ color: "var(--text-primary)" }}>Quick Info</h3>
                 </div>
               </div>
               <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <li className="flex items-center gap-2">🔒 All payments secured by Razorpay</li>
-                <li className="flex items-center gap-2">❌ No refunds after registration</li>
-                <li className="flex items-center gap-2">🎯 Skill-based earnings only</li>
-                <li className="flex items-center gap-2">💰 Entry fee mandatory for all players</li>
+                <li className="flex items-center gap-2"><Lock size={14} /> All payments secured by Razorpay</li>
+                <li className="flex items-center gap-2"><XCircle size={14} /> No refunds after registration</li>
+                <li className="flex items-center gap-2"><Target size={14} /> Skill-based earnings only</li>
+                <li className="flex items-center gap-2"><DollarSign size={14} /> Entry fee mandatory for all players</li>
               </ul>
             </div>
           </div>

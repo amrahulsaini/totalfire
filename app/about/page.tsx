@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { Target, Lock, Scale, Rocket } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -45,28 +46,28 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           {[
             {
-              icon: "🎯",
+              icon: <Target size={28} />,
               title: "Skill-Based Competition",
               desc: "We don't believe in luck. Our platform rewards pure skill. Every rupee you earn is a testament to your gameplay ability.",
             },
             {
-              icon: "🔒",
+              icon: <Lock size={28} />,
               title: "Secure & Transparent",
               desc: "All payments are processed through Razorpay, ensuring complete security. Our earnings model is transparent — what you see is what you get.",
             },
             {
-              icon: "⚖️",
+              icon: <Scale size={28} />,
               title: "Fair Play",
               desc: "Zero tolerance for cheating. We have strict anti-cheat measures and admin verification to ensure every match is played on equal ground.",
             },
             {
-              icon: "🚀",
+              icon: <Rocket size={28} />,
               title: "Growing Community",
               desc: "We're more than a platform — we're a community of passionate gamers. Join thousands who compete, connect, and celebrate the spirit of esports.",
             },
           ].map((v) => (
             <div key={v.title} className="glass-card p-6">
-              <div className="text-3xl mb-3">{v.icon}</div>
+              <div className="mb-3" style={{ color: "var(--accent-primary)" }}>{v.icon}</div>
               <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>{v.title}</h3>
               <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{v.desc}</p>
             </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allModes } from "../../components/ModesShowcase";
 import { modeDetails } from "../modeData";
+import { Lock, XCircle, Target } from "lucide-react";
 
 const validSlugs = allModes.map((m) => m.slug);
 
@@ -144,7 +145,7 @@ export default async function ModeDetailPage({
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                   style={{ background: "rgba(29,53,87,0.08)" }}>
-                  🔒
+                  <Lock size={18} style={{ color: "var(--accent-blue)" }} />
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Secured by Razorpay</p>
@@ -154,7 +155,7 @@ export default async function ModeDetailPage({
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                   style={{ background: "rgba(230,57,70,0.08)" }}>
-                  ❌
+                  <XCircle size={18} style={{ color: "var(--accent-primary)" }} />
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>No Refunds</p>
@@ -164,7 +165,7 @@ export default async function ModeDetailPage({
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                   style={{ background: "rgba(42,157,143,0.08)" }}>
-                  🎯
+                  <Target size={18} style={{ color: "var(--accent-green)" }} />
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Skill-Based</p>

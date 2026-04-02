@@ -2,6 +2,7 @@ import HeroSection from "./components/HeroSection";
 import FeaturesSection from "./components/FeaturesSection";
 import ModesShowcase from "./components/ModesShowcase";
 import Link from "next/link";
+import { Gamepad2, CreditCard, Trophy } from "lucide-react";
 
 export default function Home() {
   return (
@@ -45,12 +46,12 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { step: "01", title: "Choose a Mode", desc: "Browse our 7+ tournament modes and pick the one that suits your playstyle.", icon: "🎮" },
-              { step: "02", title: "Pay & Join", desc: "Pay the entry fee securely via Razorpay and get matched instantly.", icon: "💳" },
-              { step: "03", title: "Play & Earn", desc: "Compete, get kills, win matches, and earn real money rewards.", icon: "🏆" },
-            ].map((s) => (
+              { step: "01", title: "Choose a Mode", desc: "Browse our 7+ tournament modes and pick the one that suits your playstyle.", icon: <Gamepad2 size={36} /> },
+              { step: "02", title: "Pay & Join", desc: "Pay the entry fee securely via Razorpay and get matched instantly.", icon: <CreditCard size={36} /> },
+              { step: "03", title: "Play & Earn", desc: "Compete, get kills, win matches, and earn real money rewards.", icon: <Trophy size={36} /> },
+            ].map((s, i) => (
               <div key={s.step} className="text-center">
-                <div className="text-4xl mb-4">{s.icon}</div>
+                <div className="flex justify-center mb-4" style={{ color: "var(--accent-primary)" }}>{s.icon}</div>
                 <div className="text-xs font-bold mb-2" style={{ color: "var(--accent-primary)" }}>STEP {s.step}</div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>{s.title}</h3>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{s.desc}</p>

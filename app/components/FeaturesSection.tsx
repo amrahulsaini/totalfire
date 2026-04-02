@@ -1,37 +1,40 @@
+import { Target, Lock, Zap, Trophy, Coins, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
+
 export default function FeaturesSection() {
-  const features = [
+  const features: { icon: ReactNode; title: string; description: string; color: string }[] = [
     {
-      icon: "🎯",
+      icon: <Target size={24} />,
       title: "Skill-Based Earnings",
       description: "Your rewards are based purely on your skill. Better gameplay means bigger rewards.",
       color: "var(--accent-primary)",
     },
     {
-      icon: "🔒",
+      icon: <Lock size={24} />,
       title: "Secured by Razorpay",
       description: "All payments are processed through Razorpay ensuring complete security and reliability.",
       color: "var(--accent-blue)",
     },
     {
-      icon: "⚡",
+      icon: <Zap size={24} />,
       title: "Instant Payouts",
       description: "Win and get your rewards quickly. No unnecessary delays or hidden charges.",
       color: "var(--accent-secondary)",
     },
     {
-      icon: "🏆",
+      icon: <Trophy size={24} />,
       title: "Multiple Modes",
       description: "BR Solo, Duo, Squad, CS 1v1/2v2/4v4, LW 1v1/2v2 — pick your battlefield.",
       color: "var(--accent-green)",
     },
     {
-      icon: "💰",
+      icon: <Coins size={24} />,
       title: "Per Kill Rewards",
       description: "Earn money for every kill in BR modes. More kills = more earnings.",
       color: "var(--accent-purple)",
     },
     {
-      icon: "🛡️",
+      icon: <ShieldCheck size={24} />,
       title: "Fair Play Guaranteed",
       description: "Anti-cheat measures and fair matchmaking ensure an even playing field for everyone.",
       color: "var(--accent-primary)",
@@ -56,7 +59,7 @@ export default function FeaturesSection() {
               key={feature.title}
               className={`glass-card p-6 animate-fade-in-up stagger-${i + 1}`}
             >
-              <div className="feature-icon mb-4" style={{ background: `${feature.color}15` }}>
+              <div className="feature-icon mb-4" style={{ background: `${feature.color}15`, color: feature.color }}>
                 {feature.icon}
               </div>
               <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>{feature.title}</h3>
