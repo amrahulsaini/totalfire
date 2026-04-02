@@ -1,65 +1,83 @@
-import Image from "next/image";
+import HeroSection from "./components/HeroSection";
+import FeaturesSection from "./components/FeaturesSection";
+import ModesShowcase from "./components/ModesShowcase";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="page-enter">
+      {/* Hero */}
+      <HeroSection />
+
+      {/* Game Modes Preview */}
+      <section className="py-24" style={{ background: "var(--bg-primary)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="section-heading">
+              Choose Your <span className="fire-text">Battlefield</span>
+            </h2>
+            <p className="section-subheading">
+              Multiple game modes with real money rewards. Pick your favorite and start competing today.
+            </p>
+          </div>
+          <ModesShowcase limit={4} />
+          <div className="text-center mt-12">
+            <Link href="/modes" className="outline-btn text-lg">
+              View All Modes →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <FeaturesSection />
+
+      {/* How it Works */}
+      <section className="py-24" style={{ background: "var(--bg-primary)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="section-heading">
+              How It <span className="blue-text">Works</span>
+            </h2>
+            <p className="section-subheading">
+              Get started in 3 simple steps and begin earning from your gaming skills.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {[
+              { step: "01", title: "Choose a Mode", desc: "Browse our 7+ tournament modes and pick the one that suits your playstyle.", icon: "🎮" },
+              { step: "02", title: "Pay & Join", desc: "Pay the entry fee securely via Razorpay and get matched instantly.", icon: "💳" },
+              { step: "03", title: "Play & Earn", desc: "Compete, get kills, win matches, and earn real money rewards.", icon: "🏆" },
+            ].map((s) => (
+              <div key={s.step} className="text-center">
+                <div className="text-4xl mb-4">{s.icon}</div>
+                <div className="text-xs font-bold mb-2" style={{ color: "var(--accent-primary)" }}>STEP {s.step}</div>
+                <h3 className="text-xl font-bold mb-2 text-white">{s.title}</h3>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Banner */}
+      <section className="py-20 relative overflow-hidden" style={{ background: "var(--bg-card)" }}>
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-20"
+            style={{ background: "var(--accent-primary)", filter: "blur(120px)" }} />
+        </div>
+        <div className="max-w-3xl mx-auto text-center px-4 relative z-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-4">
+            Ready to <span className="fire-text">Dominate</span>?
+          </h2>
+          <p className="text-lg mb-8" style={{ color: "var(--text-secondary)" }}>
+            Join thousands of gamers competing for real rewards. Your next win is just a click away.
           </p>
+          <Link href="/modes" className="fire-btn text-lg !py-4 !px-12">
+            Join a Tournament Now
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
     </div>
   );
 }
