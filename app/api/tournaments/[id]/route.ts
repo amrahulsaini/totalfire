@@ -59,11 +59,12 @@ export async function GET(
     if (ue.length > 0) userEntry = ue[0];
   }
 
-  // Show room info only 5 minutes before start (IST)
-  const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-  const startTime = new Date(tournament.start_time);
-  const timeDiffMinutes =
-    (startTime.getTime() - nowIST.getTime()) / (1000 * 60);
+  // Show room info only 5 minutes before start.
+  // start_time stored as naive IST string "2026-04-03 15:20:00" — parse with explicit +05:30.
+  const startTime = new Date(
+    (tournament.start_time as string).replace(' ', 'T') + '+05:30'
+  );
+  const timeDiffMinutes = (startTime.getTime() - Date.now()) / (1000 * 60);
   const showRoom = timeDiffMinutes <= 5 && tournament.room_id;
 
   return NextResponse.json({

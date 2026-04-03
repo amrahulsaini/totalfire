@@ -389,13 +389,18 @@ bool _boolValue(dynamic value) {
 
 DateTime _dateValue(dynamic value) {
   if (value is DateTime) {
-    return value;
+    return value.isUtc ? value.toLocal() : value;
   }
 
-  final str = value?.toString() ?? '';
-  final parsed = DateTime.tryParse(str);
+  final str = (value?.toString() ?? '').trim();
+  if (str.isEmpty) return DateTime.now();
+
+  // MySQL with dateStrings:true returns "2026-04-03 15:20:00" (no offset = local IST).
+  // Normalise the space to T so Dart can parse it.
+  final normalised = str.replaceFirst(' ', 'T');
+  final parsed = DateTime.tryParse(normalised);
   if (parsed == null) return DateTime.now();
 
-  // Server returns IST datetimes; if parsed as UTC, convert to local
+  // If the string had a Z or +00 it is UTC — convert to local.
   return parsed.isUtc ? parsed.toLocal() : parsed;
 }
