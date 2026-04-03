@@ -24,8 +24,7 @@ class _ApiResult {
 }
 
 class ApiService {
-  static const String baseUrl =
-      String.fromEnvironment('TOTALFIRE_API_URL', defaultValue: 'http://192.168.1.100:3000');
+  static const String baseUrl = 'https://totalfire.in';
 
   static Uri _buildUri(String path, [Map<String, String?>? query]) {
     return Uri.parse('$baseUrl$path').replace(

@@ -64,10 +64,7 @@ export async function POST(request: Request) {
       [fullName.trim(), username.toLowerCase(), email.toLowerCase(), mobile, hashedPassword]
     );
 
-    await pool.query(
-      "INSERT INTO wallets (user_id, balance) VALUES (?, 0)",
-      [result.insertId]
-    );
+    // Wallet is created automatically by the after_user_insert trigger
 
     return NextResponse.json(
       {
