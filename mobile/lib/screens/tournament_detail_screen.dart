@@ -62,68 +62,15 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     final detail = _detail;
     if (detail == null) return;
 
-    // Step 1: collect in-game name
-    final gameNameController = TextEditingController();
-    final confirmed = await showDialog<bool>(
+    // Step 1: collect in-game name via a proper StatefulWidget dialog
+    // (avoids TextEditingController disposal race condition)
+    final gameName = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          'Enter Your In-Game Name',
-          style: TextStyle(fontWeight: FontWeight.w900),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'This is the name you use inside the game (emojis & special characters allowed).',
-              style: TextStyle(color: AppColors.textSecondary, height: 1.5),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: gameNameController,
-              autofocus: true,
-              maxLength: 100,
-              decoration: InputDecoration(
-                hintText: 'e.g. FireKing🔥 or XxPlayerxX',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accentRed,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            onPressed: () {
-              if (gameNameController.text.trim().isEmpty) return;
-              Navigator.pop(ctx, true);
-            },
-            child: const Text('Confirm & Join'),
-          ),
-        ],
-      ),
+      builder: (ctx) => const _GameNameDialog(),
     );
 
-    if (!mounted || confirmed != true) {
-      gameNameController.dispose();
-      return;
-    }
-
-    final gameName = gameNameController.text.trim();
-    gameNameController.dispose();
+    if (!mounted || gameName == null || gameName.isEmpty) return;
 
     // Step 2: join tournament
     setState(() => _isJoining = true);
@@ -1013,5 +960,77 @@ String _currency(double value) {
     return '₹${value.toStringAsFixed(0)}';
   }
   return '₹${value.toStringAsFixed(2)}';
+}
+
+// Proper StatefulWidget dialog so TextEditingController is disposed
+// via State.dispose() — avoids the '_dependents.isEmpty' assertion crash.
+class _GameNameDialog extends StatefulWidget {
+  const _GameNameDialog();
+
+  @override
+  State<_GameNameDialog> createState() => _GameNameDialogState();
+}
+
+class _GameNameDialogState extends State<_GameNameDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: const Text(
+        'Enter Your In-Game Name',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This is the name you use inside the game.\nEmojis & special characters are allowed.',
+            style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLength: 100,
+            decoration: InputDecoration(
+              hintText: 'e.g. FireKing🔥 or XxPlayerxX',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accentRed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          onPressed: () {
+            final name = _controller.text.trim();
+            if (name.isEmpty) return;
+            Navigator.pop(context, name);
+          },
+          child: const Text('Confirm & Join'),
+        ),
+      ],
+    );
+  }
 }
 
