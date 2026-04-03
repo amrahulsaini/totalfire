@@ -129,6 +129,9 @@ export default function AdminDashboardPage() {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [activeTab, setActiveTab] = useState<"create" | "manage" | "results" | "wallet">("create");
+  const [filterModeSlug, setFilterModeSlug] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [selectedModeSlug, setSelectedModeSlug] = useState(allModes[0].slug);
   const [createForm, setCreateForm] = useState<CreateTournamentForm>(() =>
     buildCreateForm(allModes[0])
@@ -201,6 +204,14 @@ export default function AdminDashboardPage() {
     const completed = tournaments.filter((item) => item.status === "completed").length;
     return { upcoming, active, completed };
   }, [tournaments]);
+
+  const filteredTournaments = useMemo(() => {
+    return tournaments.filter((t) => {
+      if (filterModeSlug !== "all" && t.mode_slug !== filterModeSlug) return false;
+      if (filterStatus !== "all" && t.status !== filterStatus) return false;
+      return true;
+    });
+  }, [tournaments, filterModeSlug, filterStatus]);
 
   const authorizedFetch = useCallback(async (url: string, init?: RequestInit) => {
     const response = await fetch(url, {
@@ -467,8 +478,26 @@ export default function AdminDashboardPage() {
           <StatCard icon={Users} label="Players" value={String(users.length)} accent="var(--accent-green)" />
         </section>
 
-        <section className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="glass-card p-6 md:p-7">
+        {/* ─── Tab Navigation ─── */}
+        <nav className="flex flex-wrap gap-2">
+          {(["create", "manage", "results", "wallet"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="rounded-full px-5 py-3 text-sm font-bold transition-all"
+              style={{
+                background: activeTab === tab ? "var(--accent-primary)" : "rgba(29,53,87,0.06)",
+                color: activeTab === tab ? "#fff" : "var(--text-secondary)",
+              }}
+            >
+              {tab === "create" ? "Create Tournament" : tab === "manage" ? "Tournament Management" : tab === "results" ? "Results & Rewards" : "Wallet Control"}
+            </button>
+          ))}
+        </nav>
+
+        {/* ─── Create Tournament Tab ─── */}
+        {activeTab === "create" && (
+        <section className="glass-card p-6 md:p-7">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "rgba(230,57,70,0.1)", color: "var(--accent-primary)" }}>
                 <Swords size={22} />
@@ -528,9 +557,12 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
             </form>
-          </div>
+          </section>
+        )}
 
-          <div className="glass-card p-6 md:p-7">
+          {/* ─── Wallet Control Tab ─── */}
+          {activeTab === "wallet" && (
+          <section className="glass-card p-6 md:p-7">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "rgba(42,157,143,0.12)", color: "var(--accent-green)" }}>
                 <Wallet size={22} />
@@ -582,9 +614,11 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
+        {/* ─── Tournament Management Tab ─── */}
+        {activeTab === "manage" && (
         <section className="glass-card p-6 md:p-7">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "rgba(29,53,87,0.08)", color: "var(--accent-blue)" }}>
@@ -596,8 +630,33 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
+          {/* Filters */}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Filter by Mode</span>
+              <select className="admin-input !py-3 !text-sm" value={filterModeSlug} onChange={(e) => setFilterModeSlug(e.target.value)}>
+                <option value="all">All Modes</option>
+                {allModes.map((m) => <option key={m.slug} value={m.slug}>{m.title}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Filter by Status</span>
+              <select className="admin-input !py-3 !text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                <option value="all">All Status</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+          </div>
+
           <div className="mt-6 grid gap-5 xl:grid-cols-2">
-            {tournaments.map((tournament) => (
+            {filteredTournaments.length === 0 ? (
+              <div className="col-span-2 rounded-2xl px-5 py-8 text-sm text-center" style={{ background: "rgba(29,53,87,0.05)", color: "var(--text-secondary)" }}>
+                No tournaments match the selected filters.
+              </div>
+            ) : filteredTournaments.map((tournament) => (
               <TournamentEditorCard
                 key={tournament.id}
                 token={token}
@@ -608,7 +667,10 @@ export default function AdminDashboardPage() {
             ))}
           </div>
         </section>
+        )}
 
+        {/* ─── Results & Reward Settlement Tab ─── */}
+        {activeTab === "results" && (
         <section className="glass-card p-6 md:p-7">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "rgba(108,71,160,0.08)", color: "var(--accent-purple)" }}>
@@ -701,6 +763,7 @@ export default function AdminDashboardPage() {
             </div>
           </form>
         </section>
+        )}
       </div>
 
       <style jsx global>{`

@@ -20,6 +20,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
   TournamentDetail? _detail;
   bool _isLoading = true;
   bool _isJoining = false;
+  int? _selectedSlot;
 
   @override
   void initState() {
@@ -64,7 +65,10 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     }
 
     setState(() => _isJoining = true);
-    final response = await ApiService.joinTournament(detail.tournament.id);
+    final response = await ApiService.joinTournament(
+      detail.tournament.id,
+      preferredSlot: _selectedSlot,
+    );
     if (!mounted) {
       return;
     }
@@ -139,13 +143,23 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                               ),
                       ),
                       const SizedBox(height: 16),
+                      _SeatPicker(
+                        tournament: detail.tournament,
+                        entries: detail.entries,
+                        userEntry: detail.userEntry,
+                        selectedSlot: _selectedSlot,
+                        onSlotSelected: detail.userEntry == null && detail.tournament.status == 'upcoming'
+                            ? (slot) => setState(() => _selectedSlot = slot)
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
                       if (detail.tournament.status == 'upcoming' && detail.userEntry == null) ...[
                         SizedBox(
                           height: 54,
                           child: ElevatedButton(
-                            onPressed: detail.tournament.isFull || _isJoining ? null : _handleJoin,
+                            onPressed: detail.tournament.isFull || _isJoining || _selectedSlot == null ? null : _handleJoin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: detail.tournament.isFull
+                              backgroundColor: detail.tournament.isFull || _selectedSlot == null
                                   ? AppColors.textMuted
                                   : AppColors.accentRed,
                             ),
@@ -160,8 +174,10 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                                   )
                                 : Text(
                                     detail.tournament.isFull
-                                        ? 'Join Another Match'
-                                        : 'Join With Wallet Balance',
+                                        ? 'Tournament Full'
+                                        : _selectedSlot == null
+                                            ? 'Select a Seat to Join'
+                                            : 'Join Seat #$_selectedSlot',
                                   ),
                           ),
                         ),
@@ -564,6 +580,358 @@ class _SlotBadge extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Theatre-style seat picker
+// solo  → 5-column grid of numbered seats
+// team  → vertical column per team (scrollable horizontally)
+// States: available (teal), taken (red), your seat (blue), selected (gold)
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _SeatPicker extends StatelessWidget {
+  const _SeatPicker({
+    required this.tournament,
+    required this.entries,
+    required this.userEntry,
+    required this.selectedSlot,
+    required this.onSlotSelected,
+  });
+
+  final TournamentSummary tournament;
+  final List<TournamentEntry> entries;
+  final UserTournamentEntry? userEntry;
+  final int? selectedSlot;
+  final void Function(int slot)? onSlotSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxPlayers = tournament.maxPlayers;
+    final teamSize = tournament.teamSize;
+    final isSolo = teamSize <= 1;
+
+    final takenMap = <int, String>{};
+    for (final e in entries) {
+      takenMap[e.slotNumber] = e.username;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Choose Your Seat',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              _LegendDot(color: const Color(0xFF2A9D8F), label: 'Available'),
+              _LegendDot(color: AppColors.accentRed, label: 'Taken'),
+              _LegendDot(color: AppColors.accentBlue, label: 'Your Seat'),
+              if (onSlotSelected != null)
+                _LegendDot(color: const Color(0xFFE9C46A), label: 'Selected'),
+            ],
+          ),
+          const SizedBox(height: 18),
+          if (isSolo)
+            _SoloGrid(
+              maxPlayers: maxPlayers,
+              takenMap: takenMap,
+              userSlot: userEntry?.slotNumber,
+              selectedSlot: selectedSlot,
+              onSlotSelected: onSlotSelected,
+            )
+          else
+            _TeamGrid(
+              maxPlayers: maxPlayers,
+              teamSize: teamSize,
+              takenMap: takenMap,
+              userSlot: userEntry?.slotNumber,
+              selectedSlot: selectedSlot,
+              onSlotSelected: onSlotSelected,
+            ),
+          const SizedBox(height: 14),
+          Text(
+            '${entries.length}/$maxPlayers seats filled',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SoloGrid extends StatelessWidget {
+  const _SoloGrid({
+    required this.maxPlayers,
+    required this.takenMap,
+    required this.userSlot,
+    required this.selectedSlot,
+    required this.onSlotSelected,
+  });
+
+  final int maxPlayers;
+  final Map<int, String> takenMap;
+  final int? userSlot;
+  final int? selectedSlot;
+  final void Function(int)? onSlotSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    const columns = 5;
+    final rows = (maxPlayers / columns).ceil();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(rows, (row) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: List.generate(columns, (col) {
+              final slot = row * columns + col + 1;
+              if (slot > maxPlayers) return const Expanded(child: SizedBox());
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: _SeatTile(
+                    slot: slot,
+                    isTaken: takenMap.containsKey(slot),
+                    takenBy: takenMap[slot],
+                    isYours: userSlot == slot,
+                    isSelected: selectedSlot == slot,
+                    onTap: onSlotSelected != null &&
+                            !takenMap.containsKey(slot) &&
+                            userSlot == null
+                        ? () => onSlotSelected!(slot)
+                        : null,
+                  ),
+                ),
+              );
+            }),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _TeamGrid extends StatelessWidget {
+  const _TeamGrid({
+    required this.maxPlayers,
+    required this.teamSize,
+    required this.takenMap,
+    required this.userSlot,
+    required this.selectedSlot,
+    required this.onSlotSelected,
+  });
+
+  final int maxPlayers;
+  final int teamSize;
+  final Map<int, String> takenMap;
+  final int? userSlot;
+  final int? selectedSlot;
+  final void Function(int)? onSlotSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final numTeams = (maxPlayers / teamSize).ceil();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(numTeams, (teamIdx) {
+          final teamNo = teamIdx + 1;
+          final startSlot = teamIdx * teamSize + 1;
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'T$teamNo',
+                    style: const TextStyle(
+                      color: AppColors.accentBlue,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                ...List.generate(teamSize, (memberIdx) {
+                  final slot = startSlot + memberIdx;
+                  if (slot > maxPlayers) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: _SeatTile(
+                      slot: slot,
+                      isTaken: takenMap.containsKey(slot),
+                      takenBy: takenMap[slot],
+                      isYours: userSlot == slot,
+                      isSelected: selectedSlot == slot,
+                      onTap: onSlotSelected != null &&
+                              !takenMap.containsKey(slot) &&
+                              userSlot == null
+                          ? () => onSlotSelected!(slot)
+                          : null,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _SeatTile extends StatelessWidget {
+  const _SeatTile({
+    required this.slot,
+    required this.isTaken,
+    required this.isYours,
+    required this.isSelected,
+    this.takenBy,
+    this.onTap,
+  });
+
+  final int slot;
+  final bool isTaken;
+  final bool isYours;
+  final bool isSelected;
+  final String? takenBy;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg;
+    final Color fg;
+
+    if (isYours) {
+      bg = AppColors.accentBlue;
+      fg = Colors.white;
+    } else if (isSelected) {
+      bg = const Color(0xFFE9C46A);
+      fg = Colors.black87;
+    } else if (isTaken) {
+      bg = AppColors.accentRed.withValues(alpha: 0.15);
+      fg = AppColors.accentRed;
+    } else {
+      bg = const Color(0xFF2A9D8F).withValues(alpha: 0.12);
+      fg = const Color(0xFF2A9D8F);
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Tooltip(
+        message: isYours
+            ? 'Your seat'
+            : isTaken
+                ? takenBy ?? 'Taken'
+                : 'Seat #$slot — tap to select',
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 54,
+          height: 54,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
+            border: isSelected
+                ? Border.all(color: const Color(0xFFE9C46A), width: 2.5)
+                : isYours
+                    ? Border.all(color: AppColors.accentBlue, width: 2)
+                    : isTaken
+                        ? null
+                        : Border.all(
+                            color: const Color(0xFF2A9D8F).withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isYours
+                    ? Icons.person
+                    : isTaken
+                        ? Icons.person_off_outlined
+                        : Icons.event_seat_outlined,
+                size: 18,
+                color: fg,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '#$slot',
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

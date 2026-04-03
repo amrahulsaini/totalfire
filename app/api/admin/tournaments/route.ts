@@ -9,19 +9,32 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
+  // Auto-transition: move any 'upcoming' tournaments whose start_time has passed to 'active'
+  await pool.query(
+    `UPDATE tournaments SET status = 'active'
+     WHERE status = 'upcoming' AND is_active = 1
+     AND start_time <= NOW()`
+  );
+
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
+  const modeSlug = searchParams.get("mode_slug");
 
   let query = `
     SELECT t.*,
     (SELECT COUNT(*) FROM tournament_entries te WHERE te.tournament_id = t.id) as current_players
     FROM tournaments t
+    WHERE 1=1
   `;
   const params: string[] = [];
 
   if (status) {
-    query += " WHERE t.status = ?";
+    query += " AND t.status = ?";
     params.push(status);
+  }
+  if (modeSlug) {
+    query += " AND t.mode_slug = ?";
+    params.push(modeSlug);
   }
 
   query += " ORDER BY t.start_time ASC";

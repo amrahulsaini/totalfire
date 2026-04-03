@@ -10,6 +10,14 @@ export async function GET(
 ) {
   const { id } = await params;
 
+  // Auto-transition: move any 'upcoming' tournaments whose start_time has passed to 'active'.
+  // Uses DATE_ADD(UTC_TIMESTAMP()) to compare IST-stored times without needing timezone tables.
+  await pool.query(
+    `UPDATE tournaments SET status = 'active'
+     WHERE status = 'upcoming' AND is_active = 1
+     AND start_time <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE)`
+  );
+
   const [tournaments] = await pool.query<RowDataPacket[]>(
     "SELECT * FROM tournaments WHERE id = ?",
     [id]

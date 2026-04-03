@@ -276,12 +276,15 @@ class ApiService {
         .toList();
   }
 
-  static Future<ApiResponse> joinTournament(int tournamentId) async {
+  static Future<ApiResponse> joinTournament(int tournamentId, {int? preferredSlot}) async {
     try {
       final result = await _request(
         'POST',
         '/api/tournaments',
-        body: {'tournamentId': tournamentId},
+        body: {
+          'tournamentId': tournamentId,
+          if (preferredSlot != null) 'preferredSlot': preferredSlot,
+        },
       );
 
       if (result.statusCode == 201) {

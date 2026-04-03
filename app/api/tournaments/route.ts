@@ -10,6 +10,15 @@ export async function GET(request: Request) {
   const status = searchParams.get("status") || "upcoming";
   const category = searchParams.get("category");
 
+  // Auto-transition: move any 'upcoming' tournaments whose start_time has passed to 'active'.
+  // start_time is stored as IST (naive). DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE) gives
+  // current IST without needing MySQL timezone tables (CONVERT_TZ fails silently if they're absent).
+  await pool.query(
+    `UPDATE tournaments SET status = 'active'
+     WHERE status = 'upcoming' AND is_active = 1
+     AND start_time <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE)`
+  );
+
   let query =
     "SELECT t.*, (SELECT COUNT(*) FROM tournament_entries te WHERE te.tournament_id = t.id) as current_players FROM tournaments t WHERE t.is_active = 1";
   const params: (string | number)[] = [];
@@ -41,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { tournamentId } = await request.json();
+  const { tournamentId, preferredSlot } = await request.json();
 
   if (!tournamentId) {
     return NextResponse.json(
@@ -68,6 +77,18 @@ export async function POST(request: Request) {
   if (tournament.status !== "upcoming") {
     return NextResponse.json(
       { error: "This tournament is no longer accepting entries" },
+      { status: 400 }
+    );
+  }
+
+  // Block joining less than 1 minute before start
+  const startTime = new Date(
+    (tournament.start_time as string).replace(' ', 'T') + '+05:30'
+  );
+  const minutesLeft = (startTime.getTime() - Date.now()) / (1000 * 60);
+  if (minutesLeft < 1) {
+    return NextResponse.json(
+      { error: "Joining closed — match starts in less than 1 minute" },
       { status: 400 }
     );
   }
@@ -136,8 +157,18 @@ export async function POST(request: Request) {
     ]
   );
 
-  // Assign slot number
-  const slotNumber = currentPlayers + 1;
+  // Assign slot number — use preferred slot if available, otherwise next sequential
+  let slotNumber = currentPlayers + 1;
+  if (preferredSlot && preferredSlot >= 1 && preferredSlot <= tournament.max_players) {
+    // Check if preferred slot is taken
+    const [slotCheck] = await pool.query<RowDataPacket[]>(
+      "SELECT id FROM tournament_entries WHERE tournament_id = ? AND slot_number = ?",
+      [tournamentId, preferredSlot]
+    );
+    if (slotCheck.length === 0) {
+      slotNumber = preferredSlot;
+    }
+  }
   const teamNumber =
     tournament.team_size > 1
       ? Math.ceil(slotNumber / tournament.team_size)
