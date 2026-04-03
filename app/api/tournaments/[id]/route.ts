@@ -34,7 +34,7 @@ export async function GET(
 
   // Get all entries with user info
   const [entries] = await pool.query<RowDataPacket[]>(
-    `SELECT te.slot_number, te.team_number, te.status, u.username, u.full_name
+    `SELECT te.slot_number, te.team_number, te.status, te.game_name, u.username, u.full_name
      FROM tournament_entries te
      JOIN users u ON te.user_id = u.id
      WHERE te.tournament_id = ?

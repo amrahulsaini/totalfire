@@ -12,4 +12,15 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+// Auto-migrate: add game_name (utf8mb4 for emojis/symbols) if it doesn't exist yet.
+pool
+  .query(
+    `ALTER TABLE tournament_entries
+     ADD COLUMN IF NOT EXISTS game_name VARCHAR(100)
+       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL`
+  )
+  .catch(() => {
+    // Non-fatal — column may already exist or table not yet created.
+  });
+
 export default pool;

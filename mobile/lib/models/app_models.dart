@@ -192,6 +192,7 @@ class TournamentEntry {
     required this.slotNumber,
     required this.teamNumber,
     required this.status,
+    this.gameName,
   });
 
   final String username;
@@ -199,6 +200,7 @@ class TournamentEntry {
   final int slotNumber;
   final int? teamNumber;
   final String? status;
+  final String? gameName;
 
   factory TournamentEntry.fromJson(Map<String, dynamic> json) {
     return TournamentEntry(
@@ -207,6 +209,7 @@ class TournamentEntry {
       slotNumber: _intValue(json['slot_number']),
       teamNumber: _nullableIntValue(json['team_number']),
       status: _nullableStringValue(json['status']),
+      gameName: _nullableStringValue(json['game_name']),
     );
   }
 }

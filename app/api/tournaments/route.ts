@@ -50,14 +50,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { tournamentId, preferredSlot } = await request.json();
+  const { tournamentId, preferredSlot, gameName } = await request.json();
 
-  if (!tournamentId) {
+  if (!tournamentId || !gameName || typeof gameName !== "string" || gameName.trim().length === 0) {
     return NextResponse.json(
-      { error: "Tournament ID is required" },
+      { error: "Tournament ID and in-game name are required" },
       { status: 400 }
     );
   }
+
+  const sanitizedGameName = gameName.trim().slice(0, 100);
 
   // Get tournament details
   const [tournaments] = await pool.query<RowDataPacket[]>(
@@ -176,8 +178,8 @@ export async function POST(request: Request) {
 
   // Create entry
   const [entry] = await pool.query<ResultSetHeader>(
-    "INSERT INTO tournament_entries (tournament_id, user_id, slot_number, team_number) VALUES (?, ?, ?, ?)",
-    [tournamentId, user.id, slotNumber, teamNumber]
+    "INSERT INTO tournament_entries (tournament_id, user_id, slot_number, team_number, game_name) VALUES (?, ?, ?, ?, ?)",
+    [tournamentId, user.id, slotNumber, teamNumber, sanitizedGameName]
   );
 
   // Get updated wallet balance

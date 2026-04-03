@@ -1064,25 +1064,48 @@ class _MyTournamentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: roomVisible
-                    ? AppColors.accentGreen.withValues(alpha: 0.08)
-                    : AppColors.bgSecondary,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                roomVisible
-                    ? 'Room ${tournament.roomId} • Pass ${tournament.roomPassword ?? '-'}'
-                    : 'Room ID unlocks 5 minutes before start',
-                style: TextStyle(
-                  color: roomVisible ? AppColors.accentGreen : AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
+            if (tournament.status == 'completed')
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGreen.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Match completed — tap to view results',
+                      style: TextStyle(
+                        color: AppColors.accentGreen,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Icon(Icons.emoji_events, color: AppColors.accentGreen, size: 18),
+                  ],
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: roomVisible
+                      ? AppColors.accentGreen.withValues(alpha: 0.08)
+                      : AppColors.bgSecondary,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  roomVisible
+                      ? 'Room ${tournament.roomId} • Pass ${tournament.roomPassword ?? '-'}'
+                      : 'Room ID unlocks 5 minutes before start',
+                  style: TextStyle(
+                    color: roomVisible ? AppColors.accentGreen : AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

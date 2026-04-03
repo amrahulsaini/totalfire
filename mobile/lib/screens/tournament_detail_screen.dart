@@ -60,18 +60,79 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
 
   Future<void> _handleJoin() async {
     final detail = _detail;
-    if (detail == null) {
+    if (detail == null) return;
+
+    // Step 1: collect in-game name
+    final gameNameController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          'Enter Your In-Game Name',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This is the name you use inside the game (emojis & special characters allowed).',
+              style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: gameNameController,
+              autofocus: true,
+              maxLength: 100,
+              decoration: InputDecoration(
+                hintText: 'e.g. FireKing🔥 or XxPlayerxX',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () {
+              if (gameNameController.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Confirm & Join'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || confirmed != true) {
+      gameNameController.dispose();
       return;
     }
 
+    final gameName = gameNameController.text.trim();
+    gameNameController.dispose();
+
+    // Step 2: join tournament
     setState(() => _isJoining = true);
     final response = await ApiService.joinTournament(
       detail.tournament.id,
+      gameName: gameName,
       preferredSlot: _selectedSlot,
     );
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() => _isJoining = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -417,6 +478,17 @@ class _EntryRow extends StatelessWidget {
                   '@${entry.username} • ${entry.teamNumber == null ? 'Solo' : 'Team ${entry.teamNumber}'}',
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
+                if (entry.gameName != null && entry.gameName!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '🎮 ${entry.gameName}',
+                    style: const TextStyle(
+                      color: AppColors.accentBlue,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -891,6 +891,23 @@ function TournamentEditorCard({
     onChanged();
   }
 
+  async function handleMarkComplete() {
+    setIsSaving(true);
+    const { response, data } = await request("/api/admin/tournaments", {
+      method: "PUT",
+      body: JSON.stringify({ id: tournament.id, status: "completed" }),
+    });
+    setIsSaving(false);
+
+    if (!response.ok) {
+      onBanner({ type: "error", text: data.error ?? `Failed to complete ${tournament.match_id}` });
+      return;
+    }
+
+    onBanner({ type: "success", text: `${tournament.match_id} marked as completed` });
+    onChanged();
+  }
+
   async function handleDeactivate() {
     setIsSaving(true);
     const { response, data } = await request(`/api/admin/tournaments?id=${tournament.id}`, {
@@ -954,6 +971,15 @@ function TournamentEditorCard({
         <button className="outline-btn !px-4 !py-3" onClick={handleDeactivate} disabled={isSaving}>
           <XCircle size={16} /> Deactivate
         </button>
+        {tournament.status !== "completed" && tournament.status !== "cancelled" && (
+          <button
+            className="outline-btn !px-4 !py-3 !border-[var(--accent-green)] !text-[var(--accent-green)] hover:!bg-[var(--accent-green)] hover:!text-white"
+            onClick={handleMarkComplete}
+            disabled={isSaving}
+          >
+            <Trophy size={16} /> Mark Complete
+          </button>
+        )}
         <button className="fire-btn !px-4 !py-3" onClick={handleSave} disabled={isSaving}>
           <Save size={16} /> Save Changes
         </button>
