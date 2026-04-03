@@ -62,12 +62,21 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     final detail = _detail;
     if (detail == null) return;
 
-    // Step 1: collect in-game name via a proper StatefulWidget dialog
-    // (avoids TextEditingController disposal race condition)
+    // Fetch wallet balance so we can show it in the confirm dialog.
+    double walletBalance = 0;
+    try {
+      walletBalance = await ApiService.getWalletBalance();
+    } catch (_) {}
+    if (!mounted) return;
+
+    // Step 1: collect in-game name + show fee confirmation dialog.
     final gameName = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const _GameNameDialog(),
+      builder: (ctx) => _GameNameDialog(
+        entryFee: detail.tournament.entryFee,
+        walletBalance: walletBalance,
+      ),
     );
 
     if (!mounted || gameName == null || gameName.isEmpty) return;
@@ -870,18 +879,24 @@ class _SeatTile extends StatelessWidget {
       fg = const Color(0xFF2A9D8F);
     }
 
+    // Username label: show first 6 chars if taken
+    final String? nameLabel = (isTaken || isYours) && takenBy != null
+        ? (takenBy!.length > 6 ? '${takenBy!.substring(0, 5)}…' : takenBy)
+        : null;
+
     return GestureDetector(
       onTap: onTap,
       child: Tooltip(
         message: isYours
-            ? 'Your seat'
+            ? 'Your seat (@${takenBy ?? ''})'
             : isTaken
-                ? takenBy ?? 'Taken'
+                ? '@${takenBy ?? 'Taken'}'
                 : 'Seat #$slot — tap to select',
+        preferBelow: true,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: 54,
-          height: 54,
+          height: 62,
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(12),
@@ -903,20 +918,33 @@ class _SeatTile extends StatelessWidget {
                 isYours
                     ? Icons.person
                     : isTaken
-                        ? Icons.person_off_outlined
+                        ? Icons.person
                         : Icons.event_seat_outlined,
-                size: 18,
+                size: 16,
                 color: fg,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               Text(
                 '#$slot',
                 style: TextStyle(
                   color: fg,
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              if (nameLabel != null) ...
+                [
+                  Text(
+                    nameLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
             ],
           ),
         ),
@@ -962,10 +990,16 @@ String _currency(double value) {
   return '₹${value.toStringAsFixed(2)}';
 }
 
-// Proper StatefulWidget dialog so TextEditingController is disposed
-// via State.dispose() — avoids the '_dependents.isEmpty' assertion crash.
+// Game name + fee confirmation dialog.
+// Uses StatefulWidget so TextEditingController is properly disposed via State.dispose().
 class _GameNameDialog extends StatefulWidget {
-  const _GameNameDialog();
+  const _GameNameDialog({
+    required this.entryFee,
+    required this.walletBalance,
+  });
+
+  final double entryFee;
+  final double walletBalance;
 
   @override
   State<_GameNameDialog> createState() => _GameNameDialogState();
@@ -982,6 +1016,11 @@ class _GameNameDialogState extends State<_GameNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final fee = widget.entryFee;
+    final balance = widget.walletBalance;
+    final afterBalance = balance - fee;
+    final canAfford = balance >= fee;
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: const Text(
@@ -1008,6 +1047,58 @@ class _GameNameDialogState extends State<_GameNameDialog> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: canAfford
+                  ? AppColors.accentGreen.withValues(alpha: 0.07)
+                  : AppColors.accentRed.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: canAfford
+                    ? AppColors.accentGreen.withValues(alpha: 0.25)
+                    : AppColors.accentRed.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Column(
+              children: [
+                _FeeLine(
+                  label: 'Entry fee',
+                  value: '− ₹${fee % 1 == 0 ? fee.toStringAsFixed(0) : fee.toStringAsFixed(2)}',
+                  valueColor: AppColors.accentRed,
+                ),
+                const SizedBox(height: 6),
+                _FeeLine(
+                  label: 'Wallet balance',
+                  value: '₹${balance % 1 == 0 ? balance.toStringAsFixed(0) : balance.toStringAsFixed(2)}',
+                  valueColor: AppColors.textPrimary,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Divider(height: 1),
+                ),
+                _FeeLine(
+                  label: 'Balance after join',
+                  value: '₹${afterBalance % 1 == 0 ? afterBalance.toStringAsFixed(0) : afterBalance.toStringAsFixed(2)}',
+                  valueColor: canAfford ? AppColors.accentGreen : AppColors.accentRed,
+                  bold: true,
+                ),
+                if (!canAfford) ...
+                  [
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Insufficient balance — add money in Wallet tab.',
+                      style: TextStyle(
+                        color: AppColors.accentRed,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+              ],
+            ),
+          ),
         ],
       ),
       actions: [
@@ -1017,17 +1108,58 @@ class _GameNameDialogState extends State<_GameNameDialog> {
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accentRed,
+            backgroundColor: canAfford ? AppColors.accentRed : AppColors.textMuted,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          onPressed: () {
-            final name = _controller.text.trim();
-            if (name.isEmpty) return;
-            Navigator.pop(context, name);
-          },
+          onPressed: canAfford
+              ? () {
+                  final name = _controller.text.trim();
+                  if (name.isEmpty) return;
+                  Navigator.pop(context, name);
+                }
+              : null,
           child: const Text('Confirm & Join'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeeLine extends StatelessWidget {
+  const _FeeLine({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.bold = false,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
+            fontSize: 13,
+          ),
         ),
       ],
     );
