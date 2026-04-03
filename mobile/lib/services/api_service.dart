@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_models.dart';
-import '../utils/doh_resolver.dart';
+import '../utils/http_client.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
@@ -27,10 +27,9 @@ class _ApiResult {
 class ApiService {
   static const String baseUrl = 'https://totalfire.in';
 
-  // Shared HTTP client with DNS-over-HTTPS fallback for carrier networks that
-  // fail to resolve .in domains (Jio, Airtel, BSNL). Chrome works because it
-  // has its own built-in DoH; this gives the app the same capability.
-  static final _client = DoHAwareClient();
+  // Shared HTTP client — on mobile uses DoH fallback for carrier DNS issues,
+  // on web uses plain client (browser handles DNS natively).
+  static final _client = createHttpClient();
 
   static Uri _buildUri(String path, [Map<String, String?>? query]) {
     return Uri.parse('$baseUrl$path').replace(
