@@ -36,16 +36,15 @@ class ApiService {
   }
 
   static Map<String, dynamic> _decodeBody(String body) {
-    if (body.isEmpty) {
+    if (body.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return const {};
+    } catch (_) {
+      // Server returned HTML or non-JSON (e.g. 404/500 page)
       return const {};
     }
-
-    final decoded = jsonDecode(body);
-    if (decoded is Map<String, dynamic>) {
-      return decoded;
-    }
-
-    return const {};
   }
 
   static Future<Map<String, String>> _headers() async {
@@ -132,12 +131,12 @@ class ApiService {
 
       return ApiResponse(
         success: false,
-        message: result.data['error']?.toString() ?? 'Registration failed',
+        message: result.data['error']?.toString() ?? 'Registration failed (HTTP ${result.statusCode})',
       );
-    } catch (_) {
-      return const ApiResponse(
+    } catch (e) {
+      return ApiResponse(
         success: false,
-        message: 'Connection failed. Check your network.',
+        message: e is ApiException ? e.message : 'Server error: $e',
       );
     }
   }
@@ -170,12 +169,12 @@ class ApiService {
 
       return ApiResponse(
         success: false,
-        message: result.data['error']?.toString() ?? 'Login failed',
+        message: result.data['error']?.toString() ?? 'Login failed (HTTP ${result.statusCode})',
       );
-    } catch (_) {
-      return const ApiResponse(
+    } catch (e) {
+      return ApiResponse(
         success: false,
-        message: 'Connection failed. Check your network.',
+        message: e is ApiException ? e.message : 'Server error: $e',
       );
     }
   }
