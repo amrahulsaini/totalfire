@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -33,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_agreeTerms) {
@@ -48,14 +49,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: Connect to API endpoint
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+    final registerResponse = await ApiService.register(
+      fullName: _fullNameController.text.trim(),
+      username: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
+      mobile: _mobileController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (!registerResponse.success) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Register API not connected yet')),
+        SnackBar(
+          content: Text(registerResponse.message),
+          backgroundColor: AppColors.accentRed,
+        ),
       );
-    });
+      return;
+    }
+
+    final loginResponse = await ApiService.login(
+      login: _usernameController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (!loginResponse.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(registerResponse.message),
+          backgroundColor: AppColors.accentGreen,
+        ),
+      );
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      return;
+    }
+
+    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   @override

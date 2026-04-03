@@ -49,7 +49,7 @@ export default function Home() {
               { step: "01", title: "Choose a Mode", desc: "Browse our 7+ tournament modes and pick the one that suits your playstyle.", icon: <Gamepad2 size={36} /> },
               { step: "02", title: "Pay & Join", desc: "Pay the entry fee securely via Razorpay and get matched instantly.", icon: <CreditCard size={36} /> },
               { step: "03", title: "Play & Earn", desc: "Compete, get kills, win matches, and earn real money rewards.", icon: <Trophy size={36} /> },
-            ].map((s, i) => (
+            ].map((s) => (
               <div key={s.step} className="text-center">
                 <div className="flex justify-center mb-4" style={{ color: "var(--accent-primary)" }}>{s.icon}</div>
                 <div className="text-xs font-bold mb-2" style={{ color: "var(--accent-primary)" }}>STEP {s.step}</div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { allModes } from "../../components/ModesShowcase";
+import { allModes } from "@/lib/modes";
 import { modeDetails } from "../modeData";
 import { Lock, XCircle, Target } from "lucide-react";
 
