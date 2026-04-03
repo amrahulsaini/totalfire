@@ -392,6 +392,10 @@ DateTime _dateValue(dynamic value) {
     return value;
   }
 
-  final parsed = DateTime.tryParse(value?.toString() ?? '');
-  return parsed ?? DateTime.now();
+  final str = value?.toString() ?? '';
+  final parsed = DateTime.tryParse(str);
+  if (parsed == null) return DateTime.now();
+
+  // Server returns IST datetimes; if parsed as UTC, convert to local
+  return parsed.isUtc ? parsed.toLocal() : parsed;
 }

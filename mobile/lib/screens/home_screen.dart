@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/time_utils.dart';
 import 'mode_detail_screen.dart';
 import 'tournament_detail_screen.dart';
 
@@ -1045,7 +1046,7 @@ class _MyTournamentCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              _formatDateTime(tournament.startTime),
+              formatDateTimeWithCountdown(tournament.startTime),
               style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 10),
@@ -1133,7 +1134,7 @@ class _TransactionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatDateTime(transaction.createdAt),
+                  formatDateTime(transaction.createdAt),
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
                 if (transaction.referenceId != null)
@@ -1385,12 +1386,3 @@ String _categoryLabel(String category) {
   }
 }
 
-String _formatDateTime(DateTime value) {
-  final day = value.day.toString().padLeft(2, '0');
-  final month = value.month.toString().padLeft(2, '0');
-  final year = value.year.toString();
-  final hour = value.hour > 12 ? value.hour - 12 : (value.hour == 0 ? 12 : value.hour);
-  final minute = value.minute.toString().padLeft(2, '0');
-  final suffix = value.hour >= 12 ? 'PM' : 'AM';
-  return '$day/$month/$year • $hour:$minute $suffix';
-}

@@ -59,11 +59,11 @@ export async function GET(
     if (ue.length > 0) userEntry = ue[0];
   }
 
-  // Show room info only 5 minutes before start
-  const now = new Date();
+  // Show room info only 5 minutes before start (IST)
+  const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
   const startTime = new Date(tournament.start_time);
   const timeDiffMinutes =
-    (startTime.getTime() - now.getTime()) / (1000 * 60);
+    (startTime.getTime() - nowIST.getTime()) / (1000 * 60);
   const showRoom = timeDiffMinutes <= 5 && tournament.room_id;
 
   return NextResponse.json({

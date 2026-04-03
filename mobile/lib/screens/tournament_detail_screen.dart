@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/time_utils.dart';
 
 class TournamentDetailScreen extends StatefulWidget {
   const TournamentDetailScreen({
@@ -259,7 +260,7 @@ class _SummaryCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _MetricPill(label: _formatDateTime(tournament.startTime), icon: Icons.schedule),
+              _MetricPill(label: formatDateTimeWithCountdown(tournament.startTime), icon: Icons.schedule),
               _MetricPill(
                 label: '${tournament.currentPlayers}/${tournament.maxPlayers} joined',
                 icon: Icons.people_outline,
@@ -574,12 +575,3 @@ String _currency(double value) {
   return '₹${value.toStringAsFixed(2)}';
 }
 
-String _formatDateTime(DateTime value) {
-  final day = value.day.toString().padLeft(2, '0');
-  final month = value.month.toString().padLeft(2, '0');
-  final year = value.year.toString();
-  final hour = value.hour > 12 ? value.hour - 12 : (value.hour == 0 ? 12 : value.hour);
-  final minute = value.minute.toString().padLeft(2, '0');
-  final suffix = value.hour >= 12 ? 'PM' : 'AM';
-  return '$day/$month/$year • $hour:$minute $suffix';
-}
