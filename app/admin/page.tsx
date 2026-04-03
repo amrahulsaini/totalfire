@@ -143,6 +143,27 @@ export default function AdminDashboardPage() {
   const [selectedResultTournamentId, setSelectedResultTournamentId] = useState("");
   const [resultRows, setResultRows] = useState<ResultRow[]>([]);
   const [loadingResults, setLoadingResults] = useState(false);
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    function tick() {
+      const now = new Date();
+      const opts: Intl.DateTimeFormatOptions = {
+        timeZone: "Asia/Kolkata",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      };
+      setCurrentTime(now.toLocaleString("en-IN", opts));
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const storedToken = window.localStorage.getItem("adminToken") ?? "";
@@ -408,6 +429,12 @@ export default function AdminDashboardPage() {
               <p className="mt-4 max-w-3xl text-sm md:text-base text-white/80 leading-7">
                 Logged in as {adminName}. Create tournaments from the predefined TotalFire modes, update room access just before kickoff, credit wallets, and submit post-match kill results.
               </p>
+              {currentTime && (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold" style={{ background: "rgba(255,255,255,0.18)" }}>
+                  <Clock3 size={15} />
+                  IST: {currentTime}
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-3">
               <button className="outline-btn !border-white/50 !text-white hover:!bg-white hover:!text-[var(--accent-blue)]" onClick={() => void loadDashboard(token)}>
