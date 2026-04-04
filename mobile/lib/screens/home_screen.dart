@@ -316,7 +316,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Battle Royale',
             subtitle: 'Solo · Duo · Squad survival on the island',
             icon: Icons.local_fire_department,
-            imagePath: 'assets/images/modes/br-allmodes.jpeg',
             accentColor: const Color(0xFFE63946),
             modeCount: _modes.where((m) => m.category == 'br').length,
             onTap: () => _openCategory('br'),
@@ -326,7 +325,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Clash Squad',
             subtitle: '1v1 & 2v2 tactical squad battles',
             icon: Icons.sports_mma,
-            imagePath: 'assets/images/modes/cs1vs1.jpeg',
             accentColor: const Color(0xFF274C77),
             modeCount: _modes.where((m) => m.category == 'cs').length,
             onTap: () => _openCategory('cs'),
@@ -336,7 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Lone Wolf',
             subtitle: '1v1 & 2v2 close-quarters duels',
             icon: Icons.bolt,
-            imagePath: 'assets/images/modes/lw1vs1.jpeg',
             accentColor: const Color(0xFF6C47A0),
             modeCount: _modes.where((m) => m.category == 'lw').length,
             onTap: () => _openCategory('lw'),
@@ -757,7 +754,6 @@ class _CategoryCard extends StatelessWidget {
     required this.label,
     required this.subtitle,
     required this.icon,
-    required this.imagePath,
     required this.accentColor,
     required this.modeCount,
     required this.onTap,
@@ -766,7 +762,6 @@ class _CategoryCard extends StatelessWidget {
   final String label;
   final String subtitle;
   final IconData icon;
-  final String imagePath;
   final Color accentColor;
   final int modeCount;
   final VoidCallback onTap;
@@ -794,7 +789,7 @@ class _CategoryCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               Image.asset(
-                imagePath,
+                'assets/images/main-image-for-all-modes.jpeg',
                 fit: BoxFit.cover,
                 errorBuilder: (ctx, err, _) => Container(color: accentColor),
               ),

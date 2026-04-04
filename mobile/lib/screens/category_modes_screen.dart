@@ -136,54 +136,30 @@ class _CategoryModeCard extends StatelessWidget {
             // Hero image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              child: Stack(
-                children: [
-                  Image.network(
-                    ApiService.resolveAssetUrl(mode.appImage),
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (ctx, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        height: 200,
-                        alignment: Alignment.center,
-                        color: AppColors.bgSecondary,
-                        child: const ThreeDotsLoader(dotSize: 9),
-                      );
-                    },
-                    errorBuilder: (ctx, err, _) => Container(
-                      height: 200,
-                      color: AppColors.accentBlue,
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.white),
+              child: Container(
+                width: double.infinity,
+                color: const Color(0xFF0D0D1A),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Image.asset(
+                      'assets/images/main-image-for-all-modes.jpeg',
+                      width: double.infinity,
+                      fit: BoxFit.contain,
                     ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.65)],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                      child: Text(
+                        mode.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
-                    child: Text(
-                      mode.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             Padding(
