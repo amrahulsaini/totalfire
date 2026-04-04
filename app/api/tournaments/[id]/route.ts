@@ -15,7 +15,7 @@ export async function GET(
   await pool.query(
     `UPDATE tournaments SET status = 'active'
      WHERE status = 'upcoming' AND is_active = 1
-     AND start_time <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE)`
+     AND start_time <= NOW()`
   );
 
   const [tournaments] = await pool.query<RowDataPacket[]>(
@@ -82,12 +82,13 @@ export async function GET(
   }
 
   // Show room info only 5 minutes before start.
-  // start_time stored as naive IST string "2026-04-03 15:20:00" — parse with explicit +05:30.
-  const startTime = new Date(
-    (tournament.start_time as string).replace(' ', 'T') + '+05:30'
+  // start_time is stored as IST string; session timezone is now IST so we compare
+  // by querying MySQL for the diff instead of doing JS timezone gymnastics.
+  const [[{ minLeft }]] = await pool.query<RowDataPacket[]>(
+    "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
+    [tournament.start_time]
   );
-  const timeDiffMinutes = (startTime.getTime() - Date.now()) / (1000 * 60);
-  const showRoom = timeDiffMinutes <= 5 && tournament.room_id;
+  const showRoom = Number(minLeft) <= 5 && tournament.room_id;
 
   return NextResponse.json({
     tournament: {

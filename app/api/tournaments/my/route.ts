@@ -40,20 +40,21 @@ export async function GET(request: Request) {
   const [tournaments] = await pool.query<RowDataPacket[]>(query, params);
 
   // Add room info only for tournaments within 5 minutes of start
-  const enriched = tournaments.map((t) => {
-    // start_time is naive IST string "2026-04-03 15:20:00" — parse with explicit +05:30
-    const startTime = new Date(
-      (t.start_time as string).replace(' ', 'T') + '+05:30'
-    );
-    const timeDiffMinutes =
-      (startTime.getTime() - Date.now()) / (1000 * 60);
-    const showRoom = timeDiffMinutes <= 5 && t.room_id;
-    return {
-      ...t,
-      room_id: showRoom ? t.room_id : null,
-      room_password: showRoom ? t.room_password : null,
-    };
-  });
+  // NOW() returns IST since session timezone is set to +05:30 in db.ts
+  const enriched = await Promise.all(
+    tournaments.map(async (t) => {
+      const [[{ minLeft }]] = await pool.query<RowDataPacket[]>(
+        "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
+        [t.start_time]
+      );
+      const showRoom = Number(minLeft) <= 5 && t.room_id;
+      return {
+        ...t,
+        room_id: showRoom ? t.room_id : null,
+        room_password: showRoom ? t.room_password : null,
+      };
+    })
+  );
 
   return NextResponse.json({ tournaments: enriched });
 }

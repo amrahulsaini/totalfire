@@ -12,6 +12,13 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+// Set IST timezone for every new connection so all TIMESTAMP reads/writes
+// and NOW() / CURRENT_TIMESTAMP use Indian Standard Time (+05:30).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(pool as any).pool.on("connection", (conn: any) => {
+  conn.query("SET time_zone = '+05:30'");
+});
+
 // Auto-migrate: add game_name (utf8mb4 for emojis/symbols) if it doesn't exist yet.
 pool
   .query(

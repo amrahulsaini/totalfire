@@ -83,12 +83,12 @@ export async function POST(request: Request) {
     );
   }
 
-  // Block joining less than 1 minute before start
-  const startTime = new Date(
-    (tournament.start_time as string).replace(' ', 'T') + '+05:30'
+  // Block joining less than 1 minute before start (NOW() is IST, session tz set in db.ts)
+  const [[{ minLeft }]] = await pool.query<RowDataPacket[]>(
+    "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
+    [tournament.start_time]
   );
-  const minutesLeft = (startTime.getTime() - Date.now()) / (1000 * 60);
-  if (minutesLeft < 1) {
+  if (Number(minLeft) < 1) {
     return NextResponse.json(
       { error: "Joining closed — match starts in less than 1 minute" },
       { status: 400 }
