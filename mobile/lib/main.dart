@@ -5,6 +5,7 @@ import 'services/api_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
+import 'widgets/three_dots_loader.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +24,7 @@ class TotalFireApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TotalFire',
+      title: 'Total Fire',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       home: const _AuthGate(),
@@ -53,7 +54,7 @@ class _AuthGateState extends State<_AuthGate> {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: ThreeDotsLoader()),
           );
         }
 

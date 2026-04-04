@@ -3,7 +3,8 @@ import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_utils.dart';
-import 'mode_detail_screen.dart';
+import '../widgets/three_dots_loader.dart';
+import 'category_modes_screen.dart';
 import 'tournament_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<WalletTransactionItem> _transactions = const [];
 
   int _currentIndex = 0;
-  String _selectedCategory = 'all';
   String _selectedMyStatus = 'upcoming';
   bool _isLoading = true;
   bool _isWalletBusy = false;
@@ -39,14 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _walletAmountController.dispose();
     super.dispose();
-  }
-
-  List<ModeCatalogItem> get _filteredModes {
-    if (_selectedCategory == 'all') {
-      return _modes;
-    }
-
-    return _modes.where((mode) => mode.category == _selectedCategory).toList();
   }
 
   List<TournamentSummary> get _filteredMyTournaments {
@@ -179,14 +171,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _openMode(ModeCatalogItem mode) async {
+  Future<void> _openCategory(String category) async {
+    final label = _categoryLabel(category);
+    final modes = _modes.where((m) => m.category == category).toList();
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => ModeDetailScreen(modeSlug: mode.slug),
+      _FadeRoute(
+        child: CategoryModesScreen(
+          category: category,
+          categoryLabel: label,
+          modes: modes,
+        ),
       ),
     );
-
     await _loadDashboard(showLoader: false);
   }
 
@@ -227,14 +224,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: ThreeDotsLoader()),
       );
     }
 
     final user = _user;
     if (user == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: ThreeDotsLoader()),
       );
     }
 
@@ -285,8 +282,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildModesTab(UserProfile user) {
     return RefreshIndicator(
       onRefresh: _refreshModesData,
+      color: AppColors.accentRed,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
         children: [
           _TopHeader(
             user: user,
@@ -299,9 +297,9 @@ class _HomeScreenState extends State<HomeScreen> {
             balance: _walletBalance,
             onTap: () => setState(() => _currentIndex = 2),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           const Text(
-            'Game Modes',
+            'Select Game Mode',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 22,
@@ -310,63 +308,40 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Open a mode to see upcoming tournaments, inside artwork, and live join slots.',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              height: 1.5,
-            ),
+            'Tap a category to browse all tournaments inside it.',
+            style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 18),
+          _CategoryCard(
+            label: 'Battle Royale',
+            subtitle: 'Solo · Duo · Squad survival on the island',
+            icon: Icons.local_fire_department,
+            imagePath: 'assets/images/modes/br-allmodes.jpeg',
+            accentColor: const Color(0xFFE63946),
+            modeCount: _modes.where((m) => m.category == 'br').length,
+            onTap: () => _openCategory('br'),
           ),
           const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _CategoryChip(
-                  label: 'All',
-                  icon: Icons.grid_view_rounded,
-                  selected: _selectedCategory == 'all',
-                  onTap: () => setState(() => _selectedCategory = 'all'),
-                ),
-                const SizedBox(width: 8),
-                _CategoryChip(
-                  label: 'Battle Royale',
-                  icon: Icons.local_fire_department,
-                  selected: _selectedCategory == 'br',
-                  onTap: () => setState(() => _selectedCategory = 'br'),
-                ),
-                const SizedBox(width: 8),
-                _CategoryChip(
-                  label: 'Clash Squad',
-                  icon: Icons.sports_mma,
-                  selected: _selectedCategory == 'cs',
-                  onTap: () => setState(() => _selectedCategory = 'cs'),
-                ),
-                const SizedBox(width: 8),
-                _CategoryChip(
-                  label: 'Lone Wolf',
-                  icon: Icons.bolt,
-                  selected: _selectedCategory == 'lw',
-                  onTap: () => setState(() => _selectedCategory = 'lw'),
-                ),
-              ],
-            ),
+          _CategoryCard(
+            label: 'Clash Squad',
+            subtitle: '1v1 & 2v2 tactical squad battles',
+            icon: Icons.sports_mma,
+            imagePath: 'assets/images/modes/cs1vs1.jpeg',
+            accentColor: const Color(0xFF274C77),
+            modeCount: _modes.where((m) => m.category == 'cs').length,
+            onTap: () => _openCategory('cs'),
           ),
           const SizedBox(height: 16),
-          if (_filteredModes.isEmpty)
-            const _EmptyCard(
-              title: 'No modes found',
-              subtitle: 'The selected category does not have any active modes right now.',
-            )
-          else
-            ..._filteredModes.map(
-              (mode) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _ModeCard(
-                  mode: mode,
-                  onTap: () => _openMode(mode),
-                ),
-              ),
-            ),
+          _CategoryCard(
+            label: 'Lone Wolf',
+            subtitle: '1v1 & 2v2 close-quarters duels',
+            icon: Icons.bolt,
+            imagePath: 'assets/images/modes/lw1vs1.jpeg',
+            accentColor: const Color(0xFF6C47A0),
+            modeCount: _modes.where((m) => m.category == 'lw').length,
+            onTap: () => _openCategory('lw'),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -653,10 +628,16 @@ class _TopHeader extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Image.asset(
-            'assets/images/totalfire-logo.webp',
+            'assets/images/totalfire-logo.jpeg',
             width: 46,
             height: 46,
             fit: BoxFit.cover,
+            errorBuilder: (ctx, err, _) => Image.asset(
+              'assets/images/totalfire-logo.webp',
+              width: 46,
+              height: 46,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -665,7 +646,7 @@ class _TopHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'TotalFire',
+                'Total Fire',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
@@ -771,221 +752,164 @@ class _WalletHeroCard extends StatelessWidget {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
     required this.label,
+    required this.subtitle,
     required this.icon,
-    required this.selected,
+    required this.imagePath,
+    required this.accentColor,
+    required this.modeCount,
     required this.onTap,
   });
 
   final String label;
+  final String subtitle;
   final IconData icon;
-  final bool selected;
+  final String imagePath;
+  final Color accentColor;
+  final int modeCount;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(24),
       onTap: onTap,
+      borderRadius: BorderRadius.circular(26),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        height: 200,
         decoration: BoxDecoration(
-          color: selected ? AppColors.accentRed : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: selected ? AppColors.accentRed : Colors.grey.shade300,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: selected ? Colors.white : AppColors.textMuted,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.22),
+              blurRadius: 22,
+              offset: const Offset(0, 8),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, _) => Container(color: accentColor),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.18),
+                      Colors.black.withValues(alpha: 0.72),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 18,
+                left: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, color: Colors.white, size: 15),
+                      const SizedBox(width: 6),
+                      Text(
+                        modeCount > 0 ? '$modeCount modes' : 'Coming soon',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: 20,
+                right: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ModeCard extends StatelessWidget {
-  const _ModeCard({
-    required this.mode,
-    required this.onTap,
-  });
+class _FadeRoute extends PageRoute<void> {
+  _FadeRoute({required this.child});
 
-  final ModeCatalogItem mode;
-  final VoidCallback onTap;
+  final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    final rewardText = mode.winPrize ?? '${_currency(mode.perKill ?? 0)}/Kill  •  Pool ${_currency(mode.prizePool ?? 0)}';
+  Color? get barrierColor => null;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-              child: Stack(
-                children: [
-                  Image.network(
-                    ApiService.resolveAssetUrl(mode.appImage),
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 180,
-                      color: AppColors.accentBlue,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.image_not_supported_outlined,
-                        size: 42,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.68),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 14,
-                    left: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _categoryLabel(mode.category),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 14,
-                    right: 14,
-                    bottom: 14,
-                    child: Text(
-                      mode.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.people_outline, size: 18, color: AppColors.textMuted),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          mode.players,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentGreen.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          'Entry ${_currency(mode.entryFee)}',
-                          style: const TextStyle(
-                            color: AppColors.accentGreen,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSecondary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Text(
-                      rewardText,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onTap,
-                      child: const Text('Open Mode'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 260);
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation) {
+    return FadeTransition(opacity: animation, child: child);
   }
 }
 

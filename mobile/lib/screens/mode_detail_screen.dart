@@ -3,6 +3,7 @@ import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_utils.dart';
+import '../widgets/three_dots_loader.dart';
 import 'tournament_detail_screen.dart';
 
 class ModeDetailScreen extends StatefulWidget {
@@ -86,7 +87,7 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
         title: Text(mode?.title ?? 'Mode Details'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ThreeDotsLoader())
           : mode == null
               ? const Center(child: Text('Mode details unavailable'))
               : RefreshIndicator(
@@ -244,6 +245,15 @@ class _HeroImage extends StatelessWidget {
             height: 230,
             width: double.infinity,
             fit: BoxFit.cover,
+            loadingBuilder: (ctx, child, progress) {
+              if (progress == null) return child;
+              return Container(
+                height: 230,
+                alignment: Alignment.center,
+                color: AppColors.bgSecondary,
+                child: const ThreeDotsLoader(dotSize: 9),
+              );
+            },
             errorBuilder: (context, error, stackTrace) => Container(
               height: 230,
               color: AppColors.accentBlue,
