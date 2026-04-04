@@ -46,14 +46,28 @@ export async function GET(
   let results: RowDataPacket[] = [];
   if (tournament.status === "completed") {
     const [res] = await pool.query<RowDataPacket[]>(
-      `SELECT mr.kills, mr.reward_amount, mr.is_winner, u.username, u.full_name
+      `SELECT mr.kills, mr.reward_amount, mr.is_winner, u.username, u.full_name,
+              te.game_name
        FROM match_results mr
        JOIN users u ON mr.user_id = u.id
+       LEFT JOIN tournament_entries te
+         ON te.tournament_id = mr.tournament_id AND te.user_id = mr.user_id
        WHERE mr.tournament_id = ?
-       ORDER BY mr.kills DESC`,
+       ORDER BY mr.is_winner DESC, mr.kills DESC`,
       [id]
     );
-    results = res;
+    // Assign positions with tie-safe ranking (same is_winner + same kills = same position)
+    let pos = 1;
+    const positioned = res.map((row, i, arr) => {
+      if (i > 0) {
+        const prev = arr[i - 1];
+        if (row.is_winner !== prev.is_winner || row.kills !== prev.kills) {
+          pos = i + 1;
+        }
+      }
+      return { ...row, position: pos };
+    });
+    results = positioned;
   }
 
   // Check if requesting user has joined (if authenticated)

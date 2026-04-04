@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
@@ -21,11 +22,33 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
   bool _isLoading = true;
   bool _isJoining = false;
   int? _selectedSlot;
+  Timer? _autoRefreshTimer;
+  String? _currentUsername;
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUser();
     _loadDetail();
+    // Auto-refresh every 30 s so room credentials appear automatically
+    // within 5 minutes of match start (backend gates the reveal).
+    _autoRefreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _loadDetail(),
+    );
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final profile = await ApiService.getSavedUserProfile();
+    if (mounted && profile != null) {
+      setState(() => _currentUsername = profile.username);
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadDetail() async {
@@ -139,6 +162,14 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                       ],
                       _SectionCard(
                         title: 'Room Access',
+                        action: IconButton(
+                          icon: const Icon(Icons.refresh, size: 20),
+                          color: AppColors.textSecondary,
+                          tooltip: 'Refresh',
+                          onPressed: _loadDetail,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
                         child: detail.tournament.roomId == null
                             ? const Text(
                                 'Room ID and password unlock 5 minutes before match start.',
@@ -222,15 +253,35 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                         const SizedBox(height: 16),
                         _SectionCard(
                           title: 'Results & Rewards',
-                          child: Column(
-                            children: detail.results
-                                .map(
-                                  (result) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: _ResultRow(result: result),
-                                  ),
-                                )
-                                .toList(),
+                          child: Builder(
+                            builder: (ctx) {
+                              // Sort: by position asc; for same position put opponent first
+                              final sorted = [...detail.results]..sort((a, b) {
+                                if (a.position != b.position) {
+                                  return a.position.compareTo(b.position);
+                                }
+                                // Tied: current user goes last (opponent shown first)
+                                final cu = _currentUsername;
+                                if (cu != null) {
+                                  if (a.username == cu) return 1;
+                                  if (b.username == cu) return -1;
+                                }
+                                return 0;
+                              });
+                              return Column(
+                                children: sorted
+                                    .map(
+                                      (result) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 10),
+                                        child: _ResultRow(
+                                          result: result,
+                                          category: detail.tournament.category,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -318,10 +369,12 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     required this.child,
+    this.action,
   });
 
   final String title;
   final Widget child;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -341,13 +394,19 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (action != null) action!,
+            ],
           ),
           const SizedBox(height: 14),
           child,
@@ -455,12 +514,14 @@ class _EntryRow extends StatelessWidget {
 }
 
 class _ResultRow extends StatelessWidget {
-  const _ResultRow({required this.result});
+  const _ResultRow({required this.result, required this.category});
 
   final MatchResultItem result;
+  final String category;
 
   @override
   Widget build(BuildContext context) {
+    final showKills = category == 'br';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -471,6 +532,29 @@ class _ResultRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Position badge
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: result.position == 1
+                  ? const Color(0xFFFFD700).withValues(alpha: 0.18)
+                  : AppColors.bgSecondary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '#${result.position}',
+              style: TextStyle(
+                color: result.position == 1
+                    ? const Color(0xFFD4A017)
+                    : AppColors.textSecondary,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,9 +568,22 @@ class _ResultRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '@${result.username} • ${result.kills} kills',
+                  showKills
+                      ? '@${result.username} • ${result.kills} kills'
+                      : '@${result.username}',
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
+                if (result.gameName != null && result.gameName!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '🎮 ${result.gameName}',
+                    style: const TextStyle(
+                      color: AppColors.accentBlue,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

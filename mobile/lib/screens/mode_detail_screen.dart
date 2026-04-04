@@ -238,61 +238,49 @@ class _HeroImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        children: [
-          Image.network(
-            ApiService.resolveAssetUrl(imagePath),
-            height: 230,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            loadingBuilder: (ctx, child, progress) {
-              if (progress == null) return child;
-              return Container(
-                height: 230,
+      child: Container(
+        width: double.infinity,
+        color: const Color(0xFF0D0D1A),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Image.network(
+              ApiService.resolveAssetUrl(imagePath),
+              width: double.infinity,
+              fit: BoxFit.contain,
+              loadingBuilder: (ctx, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  height: 200,
+                  alignment: Alignment.center,
+                  color: const Color(0xFF0D0D1A),
+                  child: const ThreeDotsLoader(dotSize: 9),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 200,
+                color: AppColors.accentBlue,
                 alignment: Alignment.center,
-                color: AppColors.bgSecondary,
-                child: const ThreeDotsLoader(dotSize: 9),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) => Container(
-              height: 230,
-              color: AppColors.accentBlue,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.image_not_supported_outlined,
-                size: 54,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
-                  ],
+                child: const Icon(
+                  Icons.image_not_supported_outlined,
+                  size: 54,
+                  color: Colors.white,
                 ),
               ),
             ),
-          ),
-          Positioned(
-            left: 18,
-            right: 18,
-            bottom: 18,
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

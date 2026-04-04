@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/images/totalfire-logo.webp
     - assets/images/totalfire-logo.jpeg
+    - assets/images/main-image-for-all-modes.jpeg
     - assets/images/modes/
     - assets/images/modes-inside/
 

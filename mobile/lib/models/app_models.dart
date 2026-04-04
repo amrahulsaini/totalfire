@@ -241,6 +241,8 @@ class MatchResultItem {
     required this.kills,
     required this.rewardAmount,
     required this.isWinner,
+    required this.position,
+    this.gameName,
   });
 
   final String username;
@@ -248,6 +250,8 @@ class MatchResultItem {
   final int kills;
   final double rewardAmount;
   final bool isWinner;
+  final int position;
+  final String? gameName;
 
   factory MatchResultItem.fromJson(Map<String, dynamic> json) {
     return MatchResultItem(
@@ -256,6 +260,8 @@ class MatchResultItem {
       kills: _intValue(json['kills']),
       rewardAmount: _doubleValue(json['reward_amount']),
       isWinner: _boolValue(json['is_winner']),
+      position: _intValue(json['position']),
+      gameName: _nullableStringValue(json['game_name']),
     );
   }
 }
