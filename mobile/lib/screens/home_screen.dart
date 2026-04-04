@@ -312,31 +312,39 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(color: AppColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 18),
-          _CategoryCard(
-            label: 'Battle Royale',
-            subtitle: 'Solo · Duo · Squad survival on the island',
-            icon: Icons.local_fire_department,
-            accentColor: const Color(0xFFE63946),
-            modeCount: _modes.where((m) => m.category == 'br').length,
-            onTap: () => _openCategory('br'),
-          ),
-          const SizedBox(height: 16),
-          _CategoryCard(
-            label: 'Clash Squad',
-            subtitle: '1v1 & 2v2 tactical squad battles',
-            icon: Icons.sports_mma,
-            accentColor: const Color(0xFF274C77),
-            modeCount: _modes.where((m) => m.category == 'cs').length,
-            onTap: () => _openCategory('cs'),
-          ),
-          const SizedBox(height: 16),
-          _CategoryCard(
-            label: 'Lone Wolf',
-            subtitle: '1v1 & 2v2 close-quarters duels',
-            icon: Icons.bolt,
-            accentColor: const Color(0xFF6C47A0),
-            modeCount: _modes.where((m) => m.category == 'lw').length,
-            onTap: () => _openCategory('lw'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _CategoryCard(
+                  label: 'Battle\nRoyale',
+                  icon: Icons.local_fire_department,
+                  accentColor: const Color(0xFFE63946),
+                  modeCount: _modes.where((m) => m.category == 'br').length,
+                  onTap: () => _openCategory('br'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _CategoryCard(
+                  label: 'Clash\nSquad',
+                  icon: Icons.sports_mma,
+                  accentColor: const Color(0xFF274C77),
+                  modeCount: _modes.where((m) => m.category == 'cs').length,
+                  onTap: () => _openCategory('cs'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _CategoryCard(
+                  label: 'Lone\nWolf',
+                  icon: Icons.bolt,
+                  accentColor: const Color(0xFF6C47A0),
+                  modeCount: _modes.where((m) => m.category == 'lw').length,
+                  onTap: () => _openCategory('lw'),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
         ],
@@ -752,7 +760,6 @@ class _WalletHeroCard extends StatelessWidget {
 class _CategoryCard extends StatelessWidget {
   const _CategoryCard({
     required this.label,
-    required this.subtitle,
     required this.icon,
     required this.accentColor,
     required this.modeCount,
@@ -760,7 +767,6 @@ class _CategoryCard extends StatelessWidget {
   });
 
   final String label;
-  final String subtitle;
   final IconData icon;
   final Color accentColor;
   final int modeCount;
@@ -768,115 +774,89 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(26),
       child: Container(
-        height: 200,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: accentColor.withValues(alpha: 0.22),
-              blurRadius: 22,
-              offset: const Offset(0, 8),
+              color: accentColor.withValues(alpha: 0.25),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                'assets/images/main-image-for-all-modes.jpeg',
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, err, _) => Container(color: accentColor),
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.18),
-                      Colors.black.withValues(alpha: 0.72),
-                    ],
+          borderRadius: BorderRadius.circular(20),
+          child: AspectRatio(
+            aspectRatio: 0.62, // passport portrait ratio
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/images/main-image-for-all-modes.jpeg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (ctx, err, _) => Container(color: accentColor),
+                ),
+                // dark gradient overlay
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.08),
+                        Colors.black.withValues(alpha: 0.78),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 18,
-                left: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(20),
+                // mode count badge top-right
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.88),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      modeCount > 0 ? '$modeCount' : '—',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                      ),
+                    ),
                   ),
-                  child: Row(
+                ),
+                // label + arrow at bottom
+                Positioned(
+                  bottom: 12,
+                  left: 10,
+                  right: 10,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(icon, color: Colors.white, size: 15),
-                      const SizedBox(width: 6),
+                      Icon(icon, color: Colors.white, size: 20),
+                      const SizedBox(height: 6),
                       Text(
-                        modeCount > 0 ? '$modeCount modes' : 'Coming soon',
+                        label,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: 20,
-                left: 20,
-                right: 20,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.82),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
