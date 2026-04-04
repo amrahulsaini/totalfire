@@ -147,6 +147,8 @@ export default function AdminDashboardPage() {
   const [resultRows, setResultRows] = useState<ResultRow[]>([]);
   const [loadingResults, setLoadingResults] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const [resultFilterMode, setResultFilterMode] = useState("all");
+  const [resultFilterDate, setResultFilterDate] = useState("");
 
   useEffect(() => {
     function tick() {
@@ -212,6 +214,14 @@ export default function AdminDashboardPage() {
       return true;
     });
   }, [tournaments, filterModeSlug, filterStatus]);
+
+  const filteredResultTournaments = useMemo(() => {
+    return tournaments
+      .filter((t) => t.status !== "cancelled")
+      .filter((t) => resultFilterMode === "all" || t.mode_slug === resultFilterMode)
+      .filter((t) => resultFilterDate === "" || t.start_time.startsWith(resultFilterDate))
+      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+  }, [tournaments, resultFilterMode, resultFilterDate]);
 
   const authorizedFetch = useCallback(async (url: string, init?: RequestInit) => {
     const response = await fetch(url, {
@@ -548,7 +558,7 @@ export default function AdminDashboardPage() {
                 <input className="admin-input" type="number" min="1" value={createForm.teamSize} onChange={(event) => setCreateForm((current) => ({ ...current, teamSize: Number(event.target.value) }))} />
               </Field>
               <Field label="Start Time" className="md:col-span-2">
-                <input className="admin-input" type="datetime-local" value={createForm.startTime} onChange={(event) => setCreateForm((current) => ({ ...current, startTime: event.target.value }))} />
+                <DateTimeInput12h value={createForm.startTime} onChange={(v) => setCreateForm((current) => ({ ...current, startTime: v }))} />
               </Field>
 
               <div className="md:col-span-2 flex justify-end">
@@ -678,24 +688,65 @@ export default function AdminDashboardPage() {
             </div>
             <div>
               <h2 className="text-2xl font-black" style={{ color: "var(--text-primary)" }}>Results & Reward Settlement</h2>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Select a tournament, enter kills and winners, then credit wallets automatically from the admin side.</p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Filter by date/mode, select a match, enter kills and winners, then credit wallets.</p>
             </div>
           </div>
 
-          <div className="mt-6">
-            <label className="block max-w-xl">
-              <span className="mb-2 block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Tournament</span>
+          {/* Result Filters */}
+          <div className="mt-5 flex flex-wrap gap-3 items-end">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Filter by Mode</span>
+              <select className="admin-input !py-3 !text-sm" value={resultFilterMode} onChange={(e) => setResultFilterMode(e.target.value)}>
+                <option value="all">All Modes</option>
+                {allModes.map((m) => <option key={m.slug} value={m.slug}>{m.title}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Filter by Date</span>
+              <input
+                type="date"
+                className="admin-input !py-3 !text-sm"
+                value={resultFilterDate}
+                onChange={(e) => setResultFilterDate(e.target.value)}
+              />
+            </label>
+            {(resultFilterMode !== "all" || resultFilterDate !== "") && (
+              <button
+                type="button"
+                className="outline-btn !px-4 !py-3 !text-sm"
+                onClick={() => { setResultFilterMode("all"); setResultFilterDate(""); }}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          <div className="mt-4">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                Tournament{" "}
+                <span className="font-normal text-xs" style={{ color: "var(--text-muted)" }}>({filteredResultTournaments.length} matches)</span>
+              </span>
               <select
                 className="admin-input"
                 value={selectedResultTournamentId}
                 onChange={(event) => setSelectedResultTournamentId(event.target.value)}
               >
-                <option value="">Select tournament</option>
-                {tournaments.filter((item) => item.status !== "cancelled").map((tournament) => (
-                  <option key={tournament.id} value={String(tournament.id)}>
-                    {tournament.match_id} • {tournament.title}
-                  </option>
-                ))}
+                <option value="">— Select a match —</option>
+                {filteredResultTournaments.map((t) => {
+                  const raw = t.start_time;
+                  const timeParts = raw.slice(11, 16).split(":");
+                  const h24 = parseInt(timeParts[0] ?? "0", 10);
+                  const ampmLabel = h24 >= 12 ? "PM" : "AM";
+                  const h12display = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
+                  const time12 = `${h12display}:${timeParts[1] ?? "00"} ${ampmLabel}`;
+                  const statusIcon = t.status === "completed" ? "✓" : t.status === "active" ? "▶" : "○";
+                  return (
+                    <option key={t.id} value={String(t.id)}>
+                      {statusIcon} {raw.slice(0, 10)} {time12} • {t.match_id} • {t.title}
+                    </option>
+                  );
+                })}
               </select>
             </label>
           </div>
@@ -707,52 +758,53 @@ export default function AdminDashboardPage() {
               </div>
             ) : resultRows.length === 0 ? (
               <div className="rounded-2xl px-5 py-8 text-sm" style={{ background: "rgba(29,53,87,0.05)", color: "var(--text-secondary)" }}>
-                Select a tournament with joined players to enter results.
+                {selectedResultTournamentId ? "No players have joined this tournament yet." : "Select a tournament above to enter results."}
               </div>
             ) : (
-              <div className="overflow-auto rounded-2xl border" style={{ borderColor: "var(--border-color)" }}>
-                <table className="w-full text-left text-sm">
-                  <thead style={{ background: "rgba(108,71,160,0.06)", color: "var(--text-primary)" }}>
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">Player</th>
-                      <th className="px-4 py-3 font-semibold">Slot</th>
-                      <th className="px-4 py-3 font-semibold">Team</th>
-                      <th className="px-4 py-3 font-semibold">Kills</th>
-                      <th className="px-4 py-3 font-semibold">Winner</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {resultRows.map((row, index) => (
-                      <tr key={row.username} className="border-t" style={{ borderColor: "var(--border-color)" }}>
-                        <td className="px-4 py-3">
-                          <div className="font-semibold" style={{ color: "var(--text-primary)" }}>{row.fullName}</div>
-                          <div style={{ color: "var(--text-muted)" }}>@{row.username}</div>
-                        </td>
-                        <td className="px-4 py-3">#{row.slotNumber}</td>
-                        <td className="px-4 py-3">{row.teamNumber ? `Team ${row.teamNumber}` : "Solo"}</td>
-                        <td className="px-4 py-3">
+              <div className="grid gap-3">
+                <div className="px-1">
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{resultRows.length} players</span>
+                </div>
+                {resultRows.map((row, index) => (
+                  <div key={row.username} className="rounded-2xl border p-4" style={{ borderColor: "var(--border-color)", background: "rgba(255,255,255,0.75)" }}>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold truncate" style={{ color: "var(--text-primary)" }}>{row.fullName}</div>
+                        <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          @{row.username} • Slot #{row.slotNumber}{row.teamNumber ? ` • Team ${row.teamNumber}` : " • Solo"}
+                        </div>
+                      </div>
+                      <div className="flex items-end gap-4 flex-shrink-0">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Kills</span>
                           <input
-                            className="admin-input max-w-28"
+                            className="admin-input !w-20 !text-center !text-lg !font-bold !py-2 !px-1"
                             type="number"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             min="0"
                             value={row.kills}
                             onChange={(event) => setResultRows((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, kills: Number(event.target.value) } : item))}
                           />
-                        </td>
-                        <td className="px-4 py-3">
-                          <label className="inline-flex items-center gap-2 font-medium" style={{ color: "var(--text-primary)" }}>
-                            <input
-                              type="checkbox"
-                              checked={row.isWinner}
-                              onChange={(event) => setResultRows((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isWinner: event.target.checked } : item))}
-                            />
-                            Winner
-                          </label>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>Winner</span>
+                          <div
+                            className="flex h-11 w-11 items-center justify-center rounded-xl"
+                            style={{
+                              background: row.isWinner ? "rgba(42,157,143,0.15)" : "rgba(29,53,87,0.06)",
+                              border: `2px solid ${row.isWinner ? "var(--accent-green)" : "var(--border-color)"}`,
+                              cursor: "pointer",
+                            }}
+                            onClick={() => setResultRows((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isWinner: !item.isWinner } : item))}
+                          >
+                            {row.isWinner && <Trophy size={18} style={{ color: "var(--accent-green)" }} />}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -820,6 +872,72 @@ function Field({
       <span className="mb-2 block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{label}</span>
       {children}
     </label>
+  );
+}
+
+function DateTimeInput12h({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const parts = value.split("T");
+  const datePart = parts[0] ?? "";
+  const timePart = parts[1] ?? "12:00";
+  const timeComponents = timePart.split(":");
+  const h24 = parseInt(timeComponents[0] ?? "12", 10);
+  const currentMin = timeComponents[1] ?? "00";
+  const ampm = h24 >= 12 ? "PM" : "AM";
+  const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
+
+  function emit(newDate: string, newH12: number, newMin: string, newAmPm: string) {
+    let h: number;
+    if (newAmPm === "AM") {
+      h = newH12 === 12 ? 0 : newH12;
+    } else {
+      h = newH12 === 12 ? 12 : newH12 + 12;
+    }
+    onChange(`${newDate}T${String(h).padStart(2, "0")}:${newMin}`);
+  }
+
+  const allMinutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <input
+        type="date"
+        className="admin-input !w-auto flex-1 min-w-[140px]"
+        value={datePart}
+        onChange={(e) => emit(e.target.value, h12, currentMin, ampm)}
+      />
+      <select
+        className="admin-input !w-auto !px-3"
+        value={h12}
+        onChange={(e) => emit(datePart, parseInt(e.target.value, 10), currentMin, ampm)}
+      >
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
+          <option key={h} value={h}>{h}</option>
+        ))}
+      </select>
+      <select
+        className="admin-input !w-auto !px-3"
+        value={currentMin}
+        onChange={(e) => emit(datePart, h12, e.target.value, ampm)}
+      >
+        {allMinutes.map((m) => (
+          <option key={m} value={m}>{m}</option>
+        ))}
+      </select>
+      <select
+        className="admin-input !w-auto !px-3"
+        value={ampm}
+        onChange={(e) => emit(datePart, h12, currentMin, e.target.value)}
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
   );
 }
 
@@ -948,7 +1066,7 @@ function TournamentEditorCard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <input className="admin-input" value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} placeholder="Title" />
-        <input className="admin-input" type="datetime-local" value={form.startTime} onChange={(event) => setForm((current) => ({ ...current, startTime: event.target.value }))} />
+        <DateTimeInput12h value={form.startTime} onChange={(v) => setForm((current) => ({ ...current, startTime: v }))} />
         <input className="admin-input" type="number" min="0" value={form.entryFee} onChange={(event) => setForm((current) => ({ ...current, entryFee: event.target.value }))} placeholder="Entry fee" />
         <input className="admin-input" type="number" min="0" value={form.perKill} onChange={(event) => setForm((current) => ({ ...current, perKill: event.target.value }))} placeholder="Per kill" />
         <input className="admin-input" value={form.winPrize} onChange={(event) => setForm((current) => ({ ...current, winPrize: event.target.value }))} placeholder="Winner prize text" />
