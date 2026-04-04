@@ -142,10 +142,25 @@ class _CategoryModeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Image.asset(
-                      'assets/images/main-image-for-all-modes.jpeg',
+                    Image.network(
+                      ApiService.resolveAssetUrl(mode.appImage),
                       width: double.infinity,
                       fit: BoxFit.contain,
+                      loadingBuilder: (ctx, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          height: 160,
+                          alignment: Alignment.center,
+                          color: const Color(0xFF0D0D1A),
+                          child: const ThreeDotsLoader(dotSize: 9),
+                        );
+                      },
+                      errorBuilder: (ctx, err, _) => Container(
+                        height: 160,
+                        color: AppColors.accentBlue,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.white),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
