@@ -298,15 +298,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => setState(() => _currentIndex = 2),
           ),
           const SizedBox(height: 28),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              'assets/images/main-image-for-all-modes.jpeg',
-              width: double.infinity,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(height: 20),
           const Text(
             'Select Game Mode',
             style: TextStyle(

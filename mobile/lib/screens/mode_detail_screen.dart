@@ -95,7 +95,7 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
-                      _HeroImage(imagePath: mode.appImage, title: mode.title),
+                      _HeroImage(title: mode.title),
                       const SizedBox(height: 20),
                       _SectionCard(
                         title: 'Overview',
@@ -226,12 +226,8 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
 }
 
 class _HeroImage extends StatelessWidget {
-  const _HeroImage({
-    required this.imagePath,
-    required this.title,
-  });
+  const _HeroImage({required this.title});
 
-  final String imagePath;
   final String title;
 
   @override
@@ -244,29 +240,10 @@ class _HeroImage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.network(
-              ApiService.resolveAssetUrl(imagePath),
+            Image.asset(
+              'assets/images/main-image-for-all-modes.jpeg',
               width: double.infinity,
               fit: BoxFit.contain,
-              loadingBuilder: (ctx, child, progress) {
-                if (progress == null) return child;
-                return Container(
-                  height: 200,
-                  alignment: Alignment.center,
-                  color: const Color(0xFF0D0D1A),
-                  child: const ThreeDotsLoader(dotSize: 9),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 200,
-                color: AppColors.accentBlue,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.image_not_supported_outlined,
-                  size: 54,
-                  color: Colors.white,
-                ),
-              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
