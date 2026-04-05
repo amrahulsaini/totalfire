@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedMyStatus = 'upcoming';
   bool _isLoading = true;
   bool _isWalletBusy = false;
+  String? _pendingWalletOrderId;
 
   @override
   void initState() {
@@ -157,17 +159,90 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     setState(() => _isWalletBusy = true);
-    final response = await ApiService.addMoney(amount);
+    final response = await ApiService.createWalletTopUp(amount);
     if (!mounted) {
       return;
     }
 
     setState(() => _isWalletBusy = false);
+
+    if (!response.success) {
+      _showMessage(response.message, isError: true);
+      return;
+    }
+
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final paymentUrl = data['paymentUrl']?.toString() ?? '';
+    final orderId = data['orderId']?.toString() ?? '';
+
+    if (paymentUrl.isEmpty || orderId.isEmpty) {
+      _showMessage('Payment link not available. Please try again.', isError: true);
+      return;
+    }
+
+    final uri = Uri.tryParse(paymentUrl);
+    if (uri == null) {
+      _showMessage('Invalid payment URL returned by server.', isError: true);
+      return;
+    }
+
+    setState(() {
+      _pendingWalletOrderId = orderId;
+      _walletAmountController.text = '100';
+    });
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!mounted) {
+        return;
+      }
+
+      if (!opened) {
+        _showMessage('Could not open payment page. Please try again.', isError: true);
+        return;
+      }
+
+      _showMessage(
+        'Checkout opened. Complete payment and tap Check Payment Status.',
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage('Failed to open payment page.', isError: true);
+    }
+  }
+
+  Future<void> _handleCheckPaymentStatus() async {
+    final orderId = _pendingWalletOrderId?.trim() ?? '';
+    if (orderId.isEmpty) {
+      _showMessage('No pending payment found. Start a new add-money request.', isError: true);
+      return;
+    }
+
+    setState(() => _isWalletBusy = true);
+    final response = await ApiService.verifyWalletTopUp(orderId);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _isWalletBusy = false);
+
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final credited = data['credited'] == true;
+
     _showMessage(response.message, isError: !response.success);
 
     if (response.success) {
-      _walletAmountController.text = '100';
       await _refreshWalletData();
+    }
+
+    if (response.success && credited && mounted) {
+      setState(() => _pendingWalletOrderId = null);
     }
   }
 
@@ -430,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Use the temporary add-money flow for testing until the payment gateway is connected.',
+            'Add money using Spacepay checkout. After payment, verify status to credit your wallet.',
             style: TextStyle(color: AppColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 20),
@@ -462,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'This calls the current test endpoint that credits your wallet directly.',
+                  'Tap Add Money to open Spacepay, complete payment, then check status here.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 16),
@@ -491,6 +566,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         : const Text('Add Money'),
                   ),
                 ),
+                if (_pendingWalletOrderId != null && _pendingWalletOrderId!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgSecondary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Pending Order: $_pendingWalletOrderId',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isWalletBusy ? null : _handleCheckPaymentStatus,
+                      icon: const Icon(Icons.sync),
+                      label: const Text('Check Payment Status'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

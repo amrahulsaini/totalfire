@@ -83,6 +83,13 @@ class ApiService {
           body: body == null ? null : jsonEncode(body),
         );
         break;
+      case 'PUT':
+        response = await _client.put(
+          uri,
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        );
+        break;
       default:
         throw const ApiException('Unsupported request method');
     }
@@ -328,7 +335,7 @@ class ApiService {
     return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
-  static Future<ApiResponse> addMoney(double amount) async {
+  static Future<ApiResponse> createWalletTopUp(double amount) async {
     try {
       final result = await _request(
         'POST',
@@ -339,14 +346,43 @@ class ApiService {
       if (result.statusCode == 200) {
         return ApiResponse(
           success: true,
-          message: result.data['message']?.toString() ?? 'Money added successfully',
+          message: result.data['message']?.toString() ?? 'Payment order created',
           data: result.data,
         );
       }
 
       return ApiResponse(
         success: false,
-        message: result.data['error']?.toString() ?? 'Failed to add money',
+        message: result.data['error']?.toString() ?? 'Failed to create payment order',
+        data: result.data,
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
+  static Future<ApiResponse> verifyWalletTopUp(String orderId) async {
+    try {
+      final result = await _request(
+        'PUT',
+        '/api/wallet',
+        body: {'orderId': orderId},
+      );
+
+      if (result.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: result.data['message']?.toString() ?? 'Payment status fetched',
+          data: result.data,
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to verify payment',
         data: result.data,
       );
     } catch (_) {
