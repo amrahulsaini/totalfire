@@ -35,6 +35,57 @@ function normalizeStatus(value: unknown): string {
   return String(value ?? "").trim().toUpperCase();
 }
 
+function isTruthyStatus(value: unknown): boolean {
+  if (value === true) {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return (
+      normalized === "true" ||
+      normalized === "1" ||
+      normalized === "success" ||
+      normalized === "ok"
+    );
+  }
+
+  return false;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function pickString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function parseJsonRecord(value: string): Record<string, unknown> {
+  if (!value.trim()) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return asRecord(parsed);
+  } catch {
+    return {};
+  }
+}
+
 function getSpacepayKeys() {
   const publicKey = process.env.SPACEPAY_PUBLIC_KEY;
   const secretKey = process.env.SPACEPAY_SECRET_KEY;
@@ -147,35 +198,65 @@ export async function POST(request: Request) {
       cache: "no-store",
     });
 
-    let responseData: Record<string, unknown> = {};
-    try {
-      responseData = (await spacepayResponse.json()) as Record<string, unknown>;
-    } catch {
-      responseData = {};
-    }
+    const responseText = await spacepayResponse.text();
+    const responseData = parseJsonRecord(responseText);
+    const result = asRecord(responseData.result ?? responseData.data);
 
-    const result =
-      responseData.result && typeof responseData.result === "object"
-        ? (responseData.result as Record<string, unknown>)
-        : {};
-    const paymentUrl =
-      typeof result.payment_url === "string" ? result.payment_url : "";
+    const statusOk =
+      isTruthyStatus(responseData.status) || isTruthyStatus(result.status);
+
+    const paymentUrl = pickString(
+      result.payment_url,
+      result.paymentUrl,
+      result.payment_link,
+      result.paymentLink,
+      result.checkout_url,
+      result.checkoutUrl,
+      result.link,
+      responseData.payment_url,
+      responseData.paymentUrl,
+      responseData.payment_link,
+      responseData.paymentLink,
+      responseData.checkout_url,
+      responseData.checkoutUrl,
+      responseData.link
+    );
+
     const providerOrderId =
-      typeof result.orderId === "string"
-        ? result.orderId
-        : typeof result.order_id === "string"
-        ? result.order_id
-        : orderId;
+      pickString(
+        result.orderId,
+        result.order_id,
+        result.ORDERID,
+        responseData.orderId,
+        responseData.order_id,
+        responseData.ORDERID
+      ) || orderId;
 
-    if (!spacepayResponse.ok || responseData.status !== true || !paymentUrl) {
+    if (!spacepayResponse.ok || !statusOk || !paymentUrl) {
+      const providerMessage = pickString(
+        responseData.message,
+        responseData.error,
+        result.message,
+        result.error
+      );
       const message =
-        typeof responseData.message === "string"
-          ? responseData.message
-          : "Unable to create Spacepay order";
+        providerMessage ||
+        (responseText.trim()
+          ? responseText.trim().slice(0, 240)
+          : !paymentUrl && statusOk
+          ? "Spacepay response did not include a payment URL"
+          : "Unable to create Spacepay order");
+
+      const normalizedMessage =
+        message.toLowerCase().includes("insufficient balance")
+          ? "Spacepay merchant account has insufficient balance. Recharge Spacepay dashboard and retry."
+          : message;
+
       return NextResponse.json(
         {
-          error: message,
+          error: normalizedMessage,
           providerStatusCode: spacepayResponse.status,
+          providerResponseStatus: responseData.status ?? null,
         },
         { status: 502 }
       );
@@ -245,40 +326,51 @@ export async function PUT(request: Request) {
       cache: "no-store",
     });
 
-    let responseData: Record<string, unknown> = {};
-    try {
-      responseData = (await spacepayResponse.json()) as Record<string, unknown>;
-    } catch {
-      responseData = {};
-    }
+    const responseText = await spacepayResponse.text();
+    const responseData = parseJsonRecord(responseText);
+    const result = asRecord(responseData.result ?? responseData.data);
+    const statusOk =
+      isTruthyStatus(responseData.status) || isTruthyStatus(result.status);
 
-    if (!spacepayResponse.ok || responseData.status !== true) {
+    if (!spacepayResponse.ok || !statusOk) {
       const message =
-        typeof responseData.message === "string"
-          ? responseData.message
-          : "Unable to fetch payment status";
+        pickString(
+          responseData.message,
+          responseData.error,
+          result.message,
+          result.error
+        ) ||
+        (responseText.trim()
+          ? responseText.trim().slice(0, 240)
+          : "Unable to fetch payment status");
       return NextResponse.json(
         {
           error: message,
           providerStatusCode: spacepayResponse.status,
+          providerResponseStatus: responseData.status ?? null,
         },
         { status: 502 }
       );
     }
 
-    const orderDetails =
-      responseData.order_details && typeof responseData.order_details === "object"
-        ? (responseData.order_details as Record<string, unknown>)
-        : {};
+    const orderDetails = asRecord(
+      responseData.order_details ?? result.order_details ?? result.orderDetails
+    );
     const providerOrderId =
-      typeof orderDetails.ORDERID === "string"
-        ? orderDetails.ORDERID
-        : typeof orderDetails.orderId === "string"
-        ? orderDetails.orderId
-        : typeof orderDetails.order_id === "string"
-        ? orderDetails.order_id
-        : inputOrderId;
-    const providerStatus = normalizeStatus(orderDetails.STATUS);
+      pickString(
+        orderDetails.ORDERID,
+        orderDetails.orderId,
+        orderDetails.order_id,
+        result.orderId,
+        result.order_id
+      ) || inputOrderId;
+    const providerStatus = normalizeStatus(
+      orderDetails.STATUS ??
+        orderDetails.status ??
+        orderDetails.payment_status ??
+        result.order_status ??
+        result.payment_status
+    );
     const providerAmount = parsePositiveAmount(
       orderDetails.AMOUNT ?? orderDetails.amount
     );
