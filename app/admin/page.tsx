@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
@@ -437,34 +438,53 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        <header className="rounded-[28px] p-6 md:p-8 text-white" style={{ background: "linear-gradient(135deg, #1d3557 0%, #274c77 50%, #e63946 100%)", boxShadow: "0 30px 70px rgba(29,53,87,0.22)" }}>
+        <header
+          className="rounded-[28px] p-6 md:p-8 border"
+          style={{
+            background: "linear-gradient(135deg, #ffffff 0%, #fff7ed 55%, #ffedd5 100%)",
+            borderColor: "var(--border-color)",
+            boxShadow: "0 18px 40px rgba(249,115,22,0.12)",
+          }}
+        >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold" style={{ background: "rgba(255,255,255,0.14)" }}>
+              <div
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                style={{
+                  background: "rgba(249,115,22,0.12)",
+                  color: "var(--text-primary)",
+                }}
+              >
                 <Shield size={16} />
                 Tournament Operations Panel
               </div>
               <h1 className="mt-5 text-3xl md:text-5xl font-black leading-tight">
                 Control matches, rooms, wallets, and rewards.
               </h1>
-              <p className="mt-4 max-w-3xl text-sm md:text-base text-white/80 leading-7">
+              <p className="mt-4 max-w-3xl text-sm md:text-base leading-7" style={{ color: "var(--text-secondary)" }}>
                 Logged in as {adminName}. Create tournaments from the predefined TotalFire modes, update room access just before kickoff, credit wallets, and submit post-match kill results.
               </p>
               {currentTime && (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold" style={{ background: "rgba(255,255,255,0.18)" }}>
+                <div
+                  className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold"
+                  style={{
+                    background: "rgba(249,115,22,0.12)",
+                    color: "var(--text-primary)",
+                  }}
+                >
                   <Clock3 size={15} />
                   IST: {currentTime}
                 </div>
               )}
             </div>
             <div className="flex flex-wrap gap-3">
-              <button className="outline-btn !border-white/50 !text-white hover:!bg-white hover:!text-[var(--accent-blue)]" onClick={() => void loadDashboard(token)}>
+              <button className="outline-btn" onClick={() => void loadDashboard(token)}>
                 <RefreshCcw size={16} /> Refresh
               </button>
               <button className="fire-btn" onClick={() => void handleSeedDefaults()} disabled={isBusy}>
                 <Rocket size={16} /> Seed Defaults
               </button>
-              <button className="outline-btn !border-white/50 !text-white hover:!bg-white hover:!text-[var(--accent-blue)]" onClick={handleLogout}>
+              <button className="outline-btn" onClick={handleLogout}>
                 <LogOut size={16} /> Logout
               </button>
             </div>
@@ -496,7 +516,7 @@ export default function AdminDashboardPage() {
               onClick={() => setActiveTab(tab)}
               className="rounded-full px-5 py-3 text-sm font-bold transition-all"
               style={{
-                background: activeTab === tab ? "var(--accent-primary)" : "rgba(29,53,87,0.06)",
+                background: activeTab === tab ? "var(--accent-primary)" : "rgba(17,17,17,0.06)",
                 color: activeTab === tab ? "#fff" : "var(--text-secondary)",
               }}
             >
@@ -504,6 +524,15 @@ export default function AdminDashboardPage() {
             </button>
           ))}
         </nav>
+
+        <div className="flex flex-wrap gap-3">
+          <Link href="/admin/wallet/transactions" className="outline-btn !px-4 !py-2 !text-sm">
+            Wallet Add-Money Transactions
+          </Link>
+          <Link href="/admin/wallet/withdrawals" className="outline-btn !px-4 !py-2 !text-sm">
+            User Withdrawal Requests
+          </Link>
+        </div>
 
         {/* ─── Create Tournament Tab ─── */}
         {activeTab === "create" && (
@@ -579,7 +608,9 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-black" style={{ color: "var(--text-primary)" }}>Wallet Control</h2>
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Temporary manual wallet management until payment gateway integration is added.</p>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  Manage wallets manually and use the links above to review add-money and user withdrawal requests.
+                </p>
               </div>
             </div>
 
