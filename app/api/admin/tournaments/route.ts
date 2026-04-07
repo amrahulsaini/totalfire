@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyAdmin } from "@/lib/auth";
+import { notifyTournamentParticipants } from "@/lib/notifications";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 export async function GET(request: Request) {
@@ -134,6 +135,15 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Tournament ID required" }, { status: 400 });
   }
 
+  const [existingRows] = await pool.query<RowDataPacket[]>(
+    "SELECT id, title, match_id, room_id, room_password, status FROM tournaments WHERE id = ? LIMIT 1",
+    [id]
+  );
+  if (existingRows.length === 0) {
+    return NextResponse.json({ error: "Tournament not found" }, { status: 404 });
+  }
+  const existing = existingRows[0];
+
   const allowedFields: Record<string, string> = {
     title: "title",
     entryFee: "entry_fee",
@@ -172,6 +182,51 @@ export async function PUT(request: Request) {
     values
   );
 
+  const roomIdChanged =
+    Object.prototype.hasOwnProperty.call(updateFields, "roomId") &&
+    String(updateFields.roomId ?? "") !== String(existing.room_id ?? "");
+  const roomPasswordChanged =
+    Object.prototype.hasOwnProperty.call(updateFields, "roomPassword") &&
+    String(updateFields.roomPassword ?? "") !== String(existing.room_password ?? "");
+
+  if (roomIdChanged || roomPasswordChanged) {
+    const nextRoomId = String(updateFields.roomId ?? existing.room_id ?? "");
+    const nextRoomPassword = String(
+      updateFields.roomPassword ?? existing.room_password ?? ""
+    );
+    if (nextRoomId) {
+      await notifyTournamentParticipants({
+        tournamentId: Number(id),
+        type: "tournament",
+        title: "Room Details Updated",
+        message: `Room details for ${existing.title} are now available.`,
+        payload: {
+          tournamentId: Number(id),
+          matchId: String(existing.match_id),
+          roomId: nextRoomId,
+          roomPassword: nextRoomPassword,
+        },
+      });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updateFields, "status")) {
+    const nextStatus = String(updateFields.status ?? "");
+    if (nextStatus && nextStatus !== String(existing.status ?? "")) {
+      await notifyTournamentParticipants({
+        tournamentId: Number(id),
+        type: "tournament",
+        title: "Tournament Status Updated",
+        message: `${existing.title} status changed to ${nextStatus}.`,
+        payload: {
+          tournamentId: Number(id),
+          matchId: String(existing.match_id),
+          status: nextStatus,
+        },
+      });
+    }
+  }
+
   return NextResponse.json({ message: "Tournament updated" });
 }
 
@@ -188,10 +243,27 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Tournament ID required" }, { status: 400 });
   }
 
+  const [existingRows] = await pool.query<RowDataPacket[]>(
+    "SELECT id, title, match_id FROM tournaments WHERE id = ? LIMIT 1",
+    [id]
+  );
+  if (existingRows.length === 0) {
+    return NextResponse.json({ error: "Tournament not found" }, { status: 404 });
+  }
+  const existing = existingRows[0];
+
   await pool.query(
     "UPDATE tournaments SET is_active = 0, status = 'cancelled' WHERE id = ?",
     [id]
   );
+
+  await notifyTournamentParticipants({
+    tournamentId: Number(id),
+    type: "tournament",
+    title: "Tournament Cancelled",
+    message: `${existing.title} has been cancelled by admin.`,
+    payload: { tournamentId: Number(id), matchId: String(existing.match_id) },
+  });
 
   return NextResponse.json({ message: "Tournament deactivated" });
 }

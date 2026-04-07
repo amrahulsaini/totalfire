@@ -413,3 +413,83 @@ DateTime _dateValue(dynamic value) {
   // If the string had a Z or +00 it is UTC — convert to local.
   return parsed.isUtc ? parsed.toLocal() : parsed;
 }
+
+class WithdrawalRequestItem {
+  const WithdrawalRequestItem({
+    required this.id,
+    required this.amount,
+    required this.status,
+    required this.method,
+    required this.accountDetails,
+    required this.createdAt,
+    required this.processedAt,
+    required this.adminNote,
+  });
+
+  final int id;
+  final double amount;
+  final String status;
+  final String? method;
+  final String? accountDetails;
+  final DateTime createdAt;
+  final DateTime? processedAt;
+  final String? adminNote;
+
+  factory WithdrawalRequestItem.fromJson(Map<String, dynamic> json) {
+    final processedAtRaw = json['processed_at'];
+    return WithdrawalRequestItem(
+      id: _intValue(json['id']),
+      amount: _doubleValue(json['amount']),
+      status: _stringValue(json['status']),
+      method: _nullableStringValue(json['method']),
+      accountDetails: _nullableStringValue(json['account_details']),
+      createdAt: _dateValue(json['created_at']),
+      processedAt: processedAtRaw == null ? null : _dateValue(processedAtRaw),
+      adminNote: _nullableStringValue(json['admin_note']),
+    );
+  }
+}
+
+class AppNotificationItem {
+  const AppNotificationItem({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.message,
+    required this.isRead,
+    required this.createdAt,
+    this.payload,
+  });
+
+  final int id;
+  final String type;
+  final String title;
+  final String message;
+  final bool isRead;
+  final DateTime createdAt;
+  final Map<String, dynamic>? payload;
+
+  factory AppNotificationItem.fromJson(Map<String, dynamic> json) {
+    return AppNotificationItem(
+      id: _intValue(json['id']),
+      type: _stringValue(json['type']),
+      title: _stringValue(json['title']),
+      message: _stringValue(json['message']),
+      isRead: _boolValue(json['is_read']),
+      createdAt: _dateValue(json['created_at']),
+      payload: _nullableMapValue(json['payload']),
+    );
+  }
+}
+
+Map<String, dynamic>? _nullableMapValue(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map(
+      (key, val) => MapEntry(key.toString(), val),
+    );
+  }
+  return null;
+}

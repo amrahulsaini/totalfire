@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyUser } from "@/lib/auth";
+import { createUserNotification } from "@/lib/notifications";
 import type { RowDataPacket, ResultSetHeader } from "mysql2";
 
 // GET /api/tournaments?mode_slug=br-ranked&status=upcoming
@@ -187,6 +188,20 @@ export async function POST(request: Request) {
     "SELECT balance FROM wallets WHERE user_id = ?",
     [user.id]
   );
+
+  await createUserNotification({
+    userId: user.id,
+    type: "tournament",
+    title: "Tournament Joined",
+    message: `You joined ${tournament.title}. Entry fee INR ${entryFee.toFixed(2)} was deducted from wallet.`,
+    payload: {
+      tournamentId: Number(tournamentId),
+      matchId: String(tournament.match_id),
+      slotNumber,
+      teamNumber,
+      entryFee,
+    },
+  });
 
   return NextResponse.json(
     {

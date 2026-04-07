@@ -50,7 +50,7 @@ export default function AdminWithdrawalsPage() {
     fetchWithdrawals();
   }, []);
 
-  const handleAction = async (id: number, action: "approve" | "reject") => {
+  const handleAction = async (id: number, action: "approve" | "reject" | "deposit") => {
     const token = window.localStorage.getItem("adminToken") ?? "";
     const res = await fetch("/api/admin/wallet/withdrawals", {
       method: "POST",
@@ -62,9 +62,11 @@ export default function AdminWithdrawalsPage() {
     });
     const json = await res.json();
     if (json.success) {
+      const actionLabel =
+        action === "approve" ? "approved" : action === "reject" ? "rejected" : "marked as deposited";
       setMessage({
         type: "success",
-        text: `Withdrawal ${action === "approve" ? "approved" : "rejected"} successfully`,
+        text: `Withdrawal ${actionLabel} successfully`,
       });
       setLoading(true);
       fetchWithdrawals();
@@ -159,12 +161,16 @@ export default function AdminWithdrawalsPage() {
                           background:
                             req.status === "approved"
                               ? "#dcfce7"
+                              : req.status === "deposited"
+                                ? "#dbeafe"
                               : req.status === "rejected"
                                 ? "#fee2e2"
                                 : "#ffedd5",
                           color:
                             req.status === "approved"
                               ? "#166534"
+                              : req.status === "deposited"
+                                ? "#1d4ed8"
                               : req.status === "rejected"
                                 ? "#991b1b"
                                 : "#9a3412",
@@ -189,6 +195,13 @@ export default function AdminWithdrawalsPage() {
                             Reject
                           </button>
                         </div>
+                      ) : req.status === "approved" ? (
+                        <button
+                          onClick={() => handleAction(req.id, "deposit")}
+                          className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                        >
+                          Deposited Now
+                        </button>
                       ) : (
                         <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                           Action completed

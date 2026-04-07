@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { createUserNotification, notifyTournamentParticipants } from "@/lib/notifications";
 import jwt from "jsonwebtoken";
 import type { RowDataPacket } from "mysql2";
 
@@ -98,6 +99,19 @@ export async function POST(request: Request) {
           tournament.match_id,
         ]
       );
+
+      await createUserNotification({
+        userId,
+        type: "wallet",
+        title: "Match Reward Credited",
+        message: `INR ${reward.toFixed(2)} credited for ${tournament.title}.`,
+        payload: {
+          tournamentId: Number(tournamentId),
+          kills: Number(r.kills ?? 0),
+          isWinner: Boolean(r.isWinner),
+          reward,
+        },
+      });
     }
   }
 
@@ -111,6 +125,14 @@ export async function POST(request: Request) {
     "UPDATE tournament_entries SET status = 'completed' WHERE tournament_id = ?",
     [tournamentId]
   );
+
+  await notifyTournamentParticipants({
+    tournamentId: Number(tournamentId),
+    type: "tournament",
+    title: "Tournament Completed",
+    message: `${tournament.title} results are now published.`,
+    payload: { tournamentId: Number(tournamentId), matchId: String(tournament.match_id) },
+  });
 
   return NextResponse.json({ message: "Results submitted and rewards distributed" });
 }

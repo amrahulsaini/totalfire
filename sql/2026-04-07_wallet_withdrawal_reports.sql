@@ -55,6 +55,13 @@ SELECT
 FROM withdrawal_requests wr
 GROUP BY wr.status;
 
+-- D2) Total amount already deposited to users
+SELECT
+  COUNT(*) AS deposited_request_count,
+  COALESCE(SUM(wr.amount), 0) AS total_deposited_amount
+FROM withdrawal_requests wr
+WHERE wr.status = 'deposited';
+
 -- E) If you use wallet_payment_transactions in APIs, this gives true gateway-level top-up report
 SELECT
   u.id,
@@ -70,3 +77,29 @@ LEFT JOIN wallet_payment_transactions wpt
  AND wpt.status IN ('authorized', 'captured')
 GROUP BY u.id, u.full_name, u.email
 ORDER BY total_added_via_gateway DESC;
+
+-- F) User notification list (latest first)
+SELECT
+  n.id,
+  n.user_id,
+  u.full_name,
+  u.email,
+  n.type,
+  n.title,
+  n.message,
+  n.is_read,
+  n.created_at
+FROM notifications n
+JOIN users u ON u.id = n.user_id
+ORDER BY n.created_at DESC;
+
+-- G) Unread notifications count per user
+SELECT
+  u.id,
+  u.full_name,
+  u.email,
+  COALESCE(SUM(CASE WHEN n.is_read = 0 THEN 1 ELSE 0 END), 0) AS unread_notifications
+FROM users u
+LEFT JOIN notifications n ON n.user_id = u.id
+GROUP BY u.id, u.full_name, u.email
+ORDER BY unread_notifications DESC;

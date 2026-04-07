@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyUser } from "@/lib/auth";
+import { createUserNotification } from "@/lib/notifications";
 import crypto from "crypto";
 import type { RowDataPacket } from "mysql2";
 import Razorpay from "razorpay";
@@ -87,6 +88,18 @@ export async function POST(request: Request) {
       "INSERT INTO wallet_transactions (user_id, amount, type, description, reference_id) VALUES (?, ?, 'credit', 'Razorpay Wallet Top-up', ?)",
       [user.id, amountDeposited, paymentId]
     );
+
+    await createUserNotification({
+      userId: user.id,
+      type: "wallet",
+      title: "Wallet Top-up Successful",
+      message: `INR ${amountDeposited.toFixed(2)} was added to your wallet successfully.`,
+      payload: {
+        amount: amountDeposited,
+        paymentId,
+        orderId: razorpayOrderId,
+      },
+    });
 
     return NextResponse.json({ status: "SUCCESS", message: "Payment verified and wallet credited" });
   } catch (error) {

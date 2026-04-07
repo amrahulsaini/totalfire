@@ -90,6 +90,24 @@ class ApiService {
           body: body == null ? null : jsonEncode(body),
         );
         break;
+      case 'PATCH':
+        response = await _client.patch(
+          uri,
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        );
+        break;
+      case 'DELETE':
+        if (body == null) {
+          response = await _client.delete(uri, headers: headers);
+        } else {
+          final req = http.Request('DELETE', uri);
+          req.headers.addAll(headers);
+          req.body = jsonEncode(body);
+          final streamed = await _client.send(req);
+          response = await http.Response.fromStream(streamed);
+        }
+        break;
       default:
         throw const ApiException('Unsupported request method');
     }
@@ -438,6 +456,138 @@ class ApiService {
         .toList();
   }
 
+  static Future<List<WithdrawalRequestItem>> getWithdrawalRequests() async {
+    final result = await _request('GET', '/api/wallet/withdrawals');
+    if (result.statusCode != 200) {
+      throw ApiException(
+        result.data['error']?.toString() ?? 'Failed to load withdrawal requests',
+        statusCode: result.statusCode,
+      );
+    }
+
+    final withdrawals = result.data['withdrawals'] as List<dynamic>? ?? const [];
+    return withdrawals
+        .whereType<Map<String, dynamic>>()
+        .map(WithdrawalRequestItem.fromJson)
+        .toList();
+  }
+
+  static Future<NotificationsResult> getNotifications({int limit = 50}) async {
+    final result = await _request(
+      'GET',
+      '/api/notifications',
+      query: {'limit': limit.toString()},
+    );
+
+    if (result.statusCode != 200) {
+      throw ApiException(
+        result.data['error']?.toString() ?? 'Failed to load notifications',
+        statusCode: result.statusCode,
+      );
+    }
+
+    final notifications = result.data['notifications'] as List<dynamic>? ?? const [];
+    return NotificationsResult(
+      unreadCount: result.data['unreadCount'] is num
+          ? (result.data['unreadCount'] as num).toInt()
+          : int.tryParse(result.data['unreadCount']?.toString() ?? '0') ?? 0,
+      items: notifications
+          .whereType<Map<String, dynamic>>()
+          .map(AppNotificationItem.fromJson)
+          .toList(),
+    );
+  }
+
+  static Future<ApiResponse> markAllNotificationsRead() async {
+    try {
+      final result = await _request(
+        'PATCH',
+        '/api/notifications',
+        body: {'markAllRead': true},
+      );
+
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'All notifications marked as read');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to mark all read',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
+  static Future<ApiResponse> markNotificationRead(int notificationId, {bool isRead = true}) async {
+    try {
+      final result = await _request(
+        'PATCH',
+        '/api/notifications/$notificationId',
+        body: {'isRead': isRead},
+      );
+
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'Notification updated');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to update notification',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteNotification(int notificationId) async {
+    try {
+      final result = await _request('DELETE', '/api/notifications/$notificationId');
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'Notification deleted');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to delete notification',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteAllNotifications() async {
+    try {
+      final result = await _request(
+        'DELETE',
+        '/api/notifications',
+        body: {'deleteAll': true},
+      );
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'All notifications deleted');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to delete all notifications',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token') != null;
@@ -473,4 +623,11 @@ class ApiResponse {
   final dynamic data;
 
   const ApiResponse({required this.success, required this.message, this.data});
+}
+
+class NotificationsResult {
+  const NotificationsResult({required this.items, required this.unreadCount});
+
+  final List<AppNotificationItem> items;
+  final int unreadCount;
 }

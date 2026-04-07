@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { createUserNotification } from "@/lib/notifications";
 import jwt from "jsonwebtoken";
 import type { RowDataPacket } from "mysql2";
 
@@ -81,6 +82,18 @@ export async function POST(request: Request) {
     "SELECT balance FROM wallets WHERE user_id = ?",
     [userId]
   );
+
+  await createUserNotification({
+    userId,
+    type: "wallet",
+    title: "Wallet Updated By Admin",
+    message: `Admin performed ${action} of INR ${Number(amount).toFixed(2)} on your wallet.`,
+    payload: {
+      action,
+      amount: Number(amount),
+      balance: Number(wallets[0].balance),
+    },
+  });
 
   return NextResponse.json({
     message: `Wallet ${action} successful`,

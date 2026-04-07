@@ -8,6 +8,8 @@ import '../theme/app_theme.dart';
 import '../utils/time_utils.dart';
 import '../widgets/three_dots_loader.dart';
 import 'category_modes_screen.dart';
+import 'notifications_screen.dart';
+import 'payments_screen.dart';
 import 'tournament_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<ModeCatalogItem> _modes = const [];
   List<TournamentSummary> _myTournaments = const [];
   List<WalletTransactionItem> _transactions = const [];
+  int _unreadNotifications = 0;
 
   int _currentIndex = 0;
   String _selectedMyStatus = 'upcoming';
@@ -74,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final modes = await ApiService.getModes();
       final myTournaments = await ApiService.getMyTournaments();
       final transactions = await ApiService.getWalletTransactions();
+      final notifications = await ApiService.getNotifications(limit: 20);
 
       if (!mounted) {
         return;
@@ -85,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _modes = modes;
         _myTournaments = myTournaments;
         _transactions = transactions;
+        _unreadNotifications = notifications.unreadCount;
       });
     } catch (error) {
       if (error is ApiException && error.statusCode == 401) {
@@ -121,6 +126,19 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
       _showMessage(error.toString(), isError: true);
+    }
+  }
+
+  Future<void> _refreshNotificationsCount() async {
+    try {
+      final result = await ApiService.getNotifications(limit: 20);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _unreadNotifications = result.unreadCount);
+    } catch (_) {
+      // Keep previous badge count if refresh fails.
     }
   }
 
@@ -194,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     _showMessage('Payment verified and wallet credited.');
     await _refreshWalletData();
+    await _refreshNotificationsCount();
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
@@ -319,6 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     _showMessage(response.message);
     await _refreshWalletData();
+    await _refreshNotificationsCount();
   }
 
   Future<void> _handleWithdrawMoney() async {
@@ -343,8 +363,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     _withdrawAmountController.clear();
-    _showMessage('Withdrawal request submitted.');
+    _showMessage('Withdrawal request submitted. Wallet will be deducted after admin marks deposited.');
     await _refreshWalletData();
+    await _refreshNotificationsCount();
+  }
+
+  Future<void> _openPaymentsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PaymentsScreen()),
+    );
+    await _loadDashboard(showLoader: false);
+  }
+
+  Future<void> _openNotificationsScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+    );
+    await _refreshNotificationsCount();
   }
 
   Future<void> _openCategory(String category) async {
@@ -464,9 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _TopHeader(
             user: user,
-            onNotificationsTap: () => _showMessage(
-              'Notifications are not connected yet.',
-            ),
+            unreadCount: _unreadNotifications,
+            onNotificationsTap: _openNotificationsScreen,
           ),
           const SizedBox(height: 20),
           _WalletHeroCard(
@@ -638,7 +674,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Use Razorpay to top up instantly. Withdrawals are saved as requests for admin approval.',
+                  'Use Razorpay to top up instantly. Withdrawal request does not deduct money until admin confirms deposited.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 16),
@@ -731,6 +767,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: _isWalletBusy ? null : _handleWithdrawMoney,
                     icon: const Icon(Icons.south_west_rounded),
                     label: const Text('Request Withdrawal'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _openPaymentsScreen,
+                    icon: const Icon(Icons.payments_outlined),
+                    label: const Text('Open Payments & Requests'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFED7AA)),
+                  ),
+                  child: const Text(
+                    'Withdrawal flow: Request -> Approved -> Deposited. Wallet deduction happens only on Deposited.',
+                    style: TextStyle(
+                      color: Color(0xFF9A3412),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -842,6 +905,16 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => setState(() => _currentIndex = 2),
         ),
         _ProfileActionTile(
+          icon: Icons.payments_outlined,
+          title: 'Payments & Withdrawals',
+          onTap: _openPaymentsScreen,
+        ),
+        _ProfileActionTile(
+          icon: Icons.notifications_active_outlined,
+          title: 'Notifications',
+          onTap: _openNotificationsScreen,
+        ),
+        _ProfileActionTile(
           icon: Icons.sports_esports_outlined,
           title: 'Browse Modes',
           onTap: () => setState(() => _currentIndex = 0),
@@ -860,10 +933,12 @@ class _HomeScreenState extends State<HomeScreen> {
 class _TopHeader extends StatelessWidget {
   const _TopHeader({
     required this.user,
+    required this.unreadCount,
     required this.onNotificationsTap,
   });
 
   final UserProfile user;
+  final int unreadCount;
   final VoidCallback onNotificationsTap;
 
   @override
@@ -912,7 +987,34 @@ class _TopHeader extends StatelessWidget {
         ),
         IconButton(
           onPressed: onNotificationsTap,
-          icon: const Icon(Icons.notifications_none_rounded),
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(Icons.notifications_none_rounded),
+              if (unreadCount > 0)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accentRed,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      unreadCount > 9 ? '9+' : unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ],
     );
