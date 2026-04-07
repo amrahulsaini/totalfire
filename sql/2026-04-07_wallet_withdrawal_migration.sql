@@ -1,4 +1,7 @@
--- Wallet + Withdrawal migration for TotalFire
+-- Wallet + Withdrawal upgrade migration for existing TotalFire schema
+-- Use this file when wallets, wallet_transactions, and withdrawal_requests already exist.
+-- If you want full table creation from scratch, run:
+-- sql/2026-04-07_wallet_withdrawal_all_tables.sql
 -- Run this in the same database used by the app (for example: tota_db)
 
 -- 1) Add optional withdrawal details for better admin handling
