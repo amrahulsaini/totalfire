@@ -89,9 +89,9 @@ export default function Home() {
 
             <div className="space-y-4">
               {complianceHighlights.map((item) => (
-                <div key={item} className="flex items-center gap-3 text-gray-800 font-medium bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div key={item.label} className="flex items-center gap-3 text-gray-800 font-medium bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <BadgeCheck size={24} className="text-green-600" />
-                  <span>{item}</span>
+                  <span>{item.label}</span>
                 </div>
               ))}
             </div>

@@ -212,3 +212,39 @@ export const storeProducts: StoreProduct[] = [
     imageUrl: "/new-frontned/chair.png",
   }
 ];
+
+export const formatINR = (amount: number) => {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+export const getProductBySlug = (slug: string) => {
+  return storeProducts.find((p) => p.slug === slug);
+};
+
+export const getRelatedProducts = (slug: string, limit = 3) => {
+  const current = getProductBySlug(slug);
+  if (!current) return [];
+  return storeProducts
+    .filter((p) => p.category === current.category && p.slug !== slug)
+    .slice(0, limit);
+};
+
+export const storeCategories = [
+  ...Array.from(new Set(storeProducts.map((p) => p.category))),
+];
+
+export const complianceHighlights = [
+  { icon: "ShieldCheck", label: "Secure Payment" },
+  { icon: "Truck", label: "Fast Shipping" },
+  { icon: "RefreshCw", label: "7-Day Returns" },
+];
+
+export const storefrontStats = [
+  { label: "Happy Gamers", value: "50K+" },
+  { label: "Products Sold", value: "100K+" },
+];
+
