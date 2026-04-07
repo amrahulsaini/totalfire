@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -31,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedMyStatus = 'upcoming';
   bool _isLoading = true;
   bool _isWalletBusy = false;
+  String? _pendingWalletOrderId;
 
   @override
   void initState() {
@@ -185,7 +188,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    setState(() => _walletAmountController.text = '100');
+    setState(() {
+      _pendingWalletOrderId = null;
+      _walletAmountController.text = '100';
+    });
     _showMessage('Payment verified and wallet credited.');
     await _refreshWalletData();
   }
@@ -235,6 +241,36 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    setState(() => _pendingWalletOrderId = orderId);
+
+    if (kIsWeb) {
+      final paymentUrl = data['paymentUrl']?.toString() ?? '';
+      if (paymentUrl.isEmpty) {
+        _showMessage('Could not initialize web payment link.', isError: true);
+        return;
+      }
+
+      final uri = Uri.tryParse(paymentUrl);
+      if (uri == null) {
+        _showMessage('Invalid payment link returned by server.', isError: true);
+        return;
+      }
+
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+        webOnlyWindowName: '_blank',
+      );
+
+      if (!opened) {
+        _showMessage('Could not open Razorpay payment page.', isError: true);
+        return;
+      }
+
+      _showMessage('Payment page opened. Complete payment and tap Verify Payment.');
+      return;
+    }
+
     final options = {
       'key': key,
       'amount': amountPaise,
@@ -254,6 +290,35 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       _showMessage('Unable to open Razorpay checkout.', isError: true);
     }
+  }
+
+  Future<void> _handleVerifyPendingPayment() async {
+    final orderId = _pendingWalletOrderId?.trim() ?? '';
+    if (orderId.isEmpty) {
+      _showMessage('No pending payment found to verify.', isError: true);
+      return;
+    }
+
+    setState(() => _isWalletBusy = true);
+    final response = await ApiService.verifyWalletTopUp({'orderId': orderId});
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _isWalletBusy = false);
+
+    if (!response.success) {
+      _showMessage(response.message, isError: true);
+      return;
+    }
+
+    setState(() {
+      _pendingWalletOrderId = null;
+      _walletAmountController.text = '100';
+    });
+    _showMessage(response.message);
+    await _refreshWalletData();
   }
 
   Future<void> _handleWithdrawMoney() async {
@@ -611,6 +676,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         : const Text('Pay With Razorpay'),
                   ),
                 ),
+                if (_pendingWalletOrderId != null && _pendingWalletOrderId!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgSecondary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Pending Order: $_pendingWalletOrderId',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isWalletBusy ? null : _handleVerifyPendingPayment,
+                      icon: const Icon(Icons.verified),
+                      label: const Text('Verify Payment'),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 const Divider(height: 1),
                 const SizedBox(height: 20),

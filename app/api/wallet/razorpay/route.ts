@@ -23,11 +23,28 @@ export async function POST(request: Request) {
     };
 
     const order = await razorpay.orders.create(options);
+
+    let paymentUrl: string | null = null;
+    try {
+      const paymentLink = await (razorpay as any).paymentLink.create({
+        amount: order.amount,
+        currency: order.currency,
+        accept_partial: false,
+        reference_id: order.id,
+        description: "Total Fire Wallet Top-up",
+      });
+      paymentUrl = paymentLink?.short_url ?? paymentLink?.shortUrl ?? null;
+    } catch {
+      // Payment link is best-effort for web fallback.
+      paymentUrl = null;
+    }
+
     return NextResponse.json({
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      key: process.env.RAZORPAY_KEY_ID
+      key: process.env.RAZORPAY_KEY_ID,
+      paymentUrl,
     });
   } catch (error) {
     console.error("Razorpay order error:", error);
