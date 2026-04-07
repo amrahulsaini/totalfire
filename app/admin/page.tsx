@@ -481,9 +481,6 @@ export default function AdminDashboardPage() {
               <button className="outline-btn" onClick={() => void loadDashboard(token)}>
                 <RefreshCcw size={16} /> Refresh
               </button>
-              <button className="fire-btn" onClick={() => void handleSeedDefaults()} disabled={isBusy}>
-                <Rocket size={16} /> Seed Defaults
-              </button>
               <button className="outline-btn" onClick={handleLogout}>
                 <LogOut size={16} /> Logout
               </button>
