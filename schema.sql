@@ -117,6 +117,17 @@ CREATE TABLE IF NOT EXISTS match_results (
   UNIQUE KEY unique_result (tournament_id, user_id)
 );
 
+-- Withdrawal requests
+CREATE TABLE IF NOT EXISTS withdrawal_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Create trigger to auto-create wallet for new users
 DROP TRIGGER IF EXISTS after_user_insert;
 DELIMITER //

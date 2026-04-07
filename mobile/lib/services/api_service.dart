@@ -339,7 +339,7 @@ class ApiService {
     try {
       final result = await _request(
         'POST',
-        '/api/wallet',
+        '/api/wallet/razorpay',
         body: {'amount': amount},
       );
 
@@ -364,18 +364,18 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse> verifyWalletTopUp(String orderId) async {
+  static Future<ApiResponse> verifyWalletTopUp(Map<String, dynamic> paymentData) async {
     try {
       final result = await _request(
-        'PUT',
-        '/api/wallet',
-        body: {'orderId': orderId},
+        'POST',
+        '/api/wallet/verify',
+        body: paymentData,
       );
 
       if (result.statusCode == 200) {
         return ApiResponse(
           success: true,
-          message: result.data['message']?.toString() ?? 'Payment status fetched',
+          message: result.data['message']?.toString() ?? 'Payment verified',
           data: result.data,
         );
       }
@@ -383,6 +383,35 @@ class ApiService {
       return ApiResponse(
         success: false,
         message: result.data['error']?.toString() ?? 'Failed to verify payment',
+        data: result.data,
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
+  static Future<ApiResponse> requestWithdrawal(double amount) async {
+    try {
+      final result = await _request(
+        'POST',
+        '/api/wallet/withdraw',
+        body: {'amount': amount},
+      );
+
+      if (result.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: result.data['message']?.toString() ?? 'Withdrawal requested',
+          data: result.data,
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to withdraw',
         data: result.data,
       );
     } catch (_) {

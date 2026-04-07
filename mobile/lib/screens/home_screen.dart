@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -16,6 +16,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final Razorpay _razorpay = Razorpay();
+  final TextEditingController _withdrawAmountController = TextEditingController();
   final TextEditingController _walletAmountController =
       TextEditingController(text: '100');
 
@@ -29,17 +31,22 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedMyStatus = 'upcoming';
   bool _isLoading = true;
   bool _isWalletBusy = false;
-  String? _pendingWalletOrderId;
+  double? _pendingWalletAmount;
 
   @override
   void initState() {
     super.initState();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
     _loadDashboard();
   }
 
   @override
   void dispose() {
+    _razorpay.clear();
     _walletAmountController.dispose();
+    _withdrawAmountController.dispose();
     super.dispose();
   }
 
@@ -151,6 +158,54 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    final orderId = response.orderId;
+    final paymentId = response.paymentId;
+    final signature = response.signature;
+    final amount = _pendingWalletAmount;
+
+    if (orderId == null || paymentId == null || signature == null || amount == null) {
+      _showMessage('Payment data missing. Please contact support.', isError: true);
+      return;
+    }
+
+    setState(() => _isWalletBusy = true);
+    final verifyResponse = await ApiService.verifyWalletTopUp({
+      'razorpay_order_id': orderId,
+      'razorpay_payment_id': paymentId,
+      'razorpay_signature': signature,
+      'original_amount': amount,
+    });
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _isWalletBusy = false);
+
+    if (!verifyResponse.success) {
+      _showMessage(verifyResponse.message, isError: true);
+      return;
+    }
+
+    setState(() {
+      _pendingWalletAmount = null;
+      _walletAmountController.text = '100';
+    });
+    _showMessage('Payment verified and wallet credited.');
+    await _refreshWalletData();
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    setState(() => _pendingWalletAmount = null);
+    _showMessage('Payment failed or cancelled. Please try again.', isError: true);
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    final name = response.walletName ?? 'wallet';
+    _showMessage('Selected external wallet: $name');
+  }
+
   Future<void> _handleAddMoney() async {
     final amount = double.tryParse(_walletAmountController.text.trim());
     if (amount == null || amount <= 0) {
@@ -160,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() => _isWalletBusy = true);
     final response = await ApiService.createWalletTopUp(amount);
+
     if (!mounted) {
       return;
     }
@@ -174,76 +230,66 @@ class _HomeScreenState extends State<HomeScreen> {
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : const <String, dynamic>{};
-    final paymentUrl = data['paymentUrl']?.toString() ?? '';
     final orderId = data['orderId']?.toString() ?? '';
+    final key = data['key']?.toString() ?? '';
+    final amountPaise = data['amount'] is num
+        ? (data['amount'] as num).toInt()
+        : (amount * 100).round();
+    final currency = data['currency']?.toString() ?? 'INR';
 
-    if (paymentUrl.isEmpty || orderId.isEmpty) {
-      _showMessage('Payment link not available. Please try again.', isError: true);
+    if (orderId.isEmpty || key.isEmpty || amountPaise <= 0) {
+      _showMessage('Could not initialize Razorpay order.', isError: true);
       return;
     }
 
-    final uri = Uri.tryParse(paymentUrl);
-    if (uri == null) {
-      _showMessage('Invalid payment URL returned by server.', isError: true);
-      return;
-    }
+    setState(() => _pendingWalletAmount = amount);
 
-    setState(() {
-      _pendingWalletOrderId = orderId;
-      _walletAmountController.text = '100';
-    });
+    final options = {
+      'key': key,
+      'amount': amountPaise,
+      'currency': currency,
+      'name': 'Total Fire',
+      'description': 'Wallet Top-up',
+      'order_id': orderId,
+      'prefill': {
+        'contact': _user?.mobile ?? '',
+        'email': _user?.email ?? '',
+      },
+      'theme': {'color': '#E63946'},
+    };
 
     try {
-      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!mounted) {
-        return;
-      }
-
-      if (!opened) {
-        _showMessage('Could not open payment page. Please try again.', isError: true);
-        return;
-      }
-
-      _showMessage(
-        'Checkout opened. Complete payment and tap Check Payment Status.',
-      );
+      _razorpay.open(options);
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      _showMessage('Failed to open payment page.', isError: true);
+      setState(() => _pendingWalletAmount = null);
+      _showMessage('Unable to open Razorpay checkout.', isError: true);
     }
   }
 
-  Future<void> _handleCheckPaymentStatus() async {
-    final orderId = _pendingWalletOrderId?.trim() ?? '';
-    if (orderId.isEmpty) {
-      _showMessage('No pending payment found. Start a new add-money request.', isError: true);
+  Future<void> _handleWithdrawMoney() async {
+    final amount = double.tryParse(_withdrawAmountController.text.trim());
+    if (amount == null || amount <= 0) {
+      _showMessage('Enter a valid withdrawal amount.', isError: true);
       return;
     }
 
     setState(() => _isWalletBusy = true);
-    final response = await ApiService.verifyWalletTopUp(orderId);
+    final response = await ApiService.requestWithdrawal(amount);
+
     if (!mounted) {
       return;
     }
 
     setState(() => _isWalletBusy = false);
 
-    final data = response.data is Map<String, dynamic>
-        ? response.data as Map<String, dynamic>
-        : const <String, dynamic>{};
-    final credited = data['credited'] == true;
-
-    _showMessage(response.message, isError: !response.success);
-
-    if (response.success) {
-      await _refreshWalletData();
+    if (!response.success) {
+      _showMessage(response.message, isError: true);
+      return;
     }
 
-    if (response.success && credited && mounted) {
-      setState(() => _pendingWalletOrderId = null);
-    }
+    _withdrawAmountController.clear();
+    _showMessage('Withdrawal request submitted.');
+    await _refreshWalletData();
   }
 
   Future<void> _openCategory(String category) async {
@@ -505,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Add money using Spacepay checkout. After payment, verify status to credit your wallet.',
+            'Add money with Razorpay and request withdrawals directly from this screen.',
             style: TextStyle(color: AppColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 20),
@@ -528,7 +574,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Add Money',
+                  'Wallet Actions',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 18,
@@ -537,15 +583,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Tap Add Money to open Spacepay, complete payment, then check status here.',
+                  'Use Razorpay to top up instantly. Withdrawals are saved as requests for admin approval.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 16),
+                const Text(
+                  'Add Money',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 TextField(
                   controller: _walletAmountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
-                    labelText: 'Amount',
+                    labelText: 'Add amount',
                     prefixIcon: Icon(Icons.currency_rupee),
                   ),
                 ),
@@ -563,37 +618,38 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Add Money'),
+                        : const Text('Pay With Razorpay'),
                   ),
                 ),
-                if (_pendingWalletOrderId != null && _pendingWalletOrderId!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSecondary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Pending Order: $_pendingWalletOrderId',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                const SizedBox(height: 20),
+                const Divider(height: 1),
+                const SizedBox(height: 20),
+                const Text(
+                  'Withdraw Money',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                   ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _isWalletBusy ? null : _handleCheckPaymentStatus,
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Check Payment Status'),
-                    ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _withdrawAmountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Withdraw amount',
+                    prefixIcon: Icon(Icons.currency_rupee),
                   ),
-                ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isWalletBusy ? null : _handleWithdrawMoney,
+                    icon: const Icon(Icons.south_west_rounded),
+                    label: const Text('Request Withdrawal'),
+                  ),
+                ),
               ],
             ),
           ),
