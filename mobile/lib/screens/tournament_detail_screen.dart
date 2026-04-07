@@ -405,7 +405,7 @@ class _SectionCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              if (action != null) action!,
+              ?action,
             ],
           ),
           const SizedBox(height: 14),

@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import ProductCard from "../../_store/ProductCard";
 import StoreShell from "../../_store/StoreShell";
@@ -57,16 +58,17 @@ export default async function ProductDetailPage({
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-          <div
-            className="flex-1 flex flex-col justify-center items-center text-center p-12 lg:p-20 rounded-3xl text-white shadow-lg min-h-[400px] lg:min-h-[600px] relative overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${product.accentFrom} 0%, ${product.accentTo} 100%)`,
-            }}
-          >
-            {product.badge && <span className="absolute top-6 right-6 bg-white text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">{product.badge}</span>}
-            <strong className="text-white/80 font-bold tracking-widest uppercase mb-4 block">{product.heroLabel}</strong>
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black mb-6 leading-tight drop-shadow-xl">{product.name}</h1>
-            <p className="text-lg md:text-xl font-medium text-white/90 max-w-xl mx-auto leading-relaxed">{product.shortDescription}</p>
+          <div className="flex-1 flex flex-col justify-center items-center text-center p-12 lg:p-20 rounded-3xl bg-gray-50 shadow-lg min-h-[400px] lg:min-h-[600px] relative overflow-hidden">
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              className="object-contain p-8 group-hover:scale-105 transition-transform duration-300"
+            />
+            {product.badge && <span className="absolute top-6 right-6 bg-white text-orange-600 border border-orange-500 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider z-10">{product.badge}</span>}
+            <strong className="text-gray-900/80 font-bold tracking-widest uppercase mb-4 block z-10 relative">{product.heroLabel}</strong>
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-gray-900 mb-6 leading-tight drop-shadow-xl z-10 relative">{product.name}</h1>
+            <p className="text-lg md:text-xl font-medium text-gray-700 max-w-xl mx-auto leading-relaxed z-10 relative">{product.shortDescription}</p>
           </div>
 
           <div className="flex-1 flex flex-col justify-center py-4">

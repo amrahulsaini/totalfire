@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bebas_Neue, Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppChrome from "./components/AppChrome";
 
@@ -13,13 +13,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const storeDisplay = Bebas_Neue({
+  variable: "--font-store-display",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const storeBody = Space_Grotesk({
+  variable: "--font-store-body",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "TotalFire — Esports Tournaments",
+    default: "TotalFire Store",
     template: "%s | TotalFire",
   },
   description:
-    "India's premier esports tournament platform. Compete in BR, CS, and LW modes. Skill-based earnings with secure Razorpay payments.",
+    "TotalFire.in ecommerce storefront for gaming gear, merch, and digital products. Tournament portal available at /main.",
   icons: {
     icon: "/totalfire-icon.ico",
     shortcut: "/totalfire-icon.ico",
@@ -34,7 +45,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${storeDisplay.variable} ${storeBody.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppChrome>{children}</AppChrome>

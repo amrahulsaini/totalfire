@@ -1,7 +1,20 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const portalBase = pathname.startsWith("/main") ? "/main" : "";
+
+  const portalHref = (path: string) => {
+    if (!portalBase) {
+      return path;
+    }
+    return path === "/" ? portalBase : `${portalBase}${path}`;
+  };
+
   return (
     <footer className="footer-gradient mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -21,10 +34,10 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-4 text-white">Quick Links</h4>
             <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-              <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/modes" className="hover:text-white transition-colors">All Modes</Link></li>
-              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
+              <li><Link href={portalHref("/")} className="hover:text-white transition-colors">Home</Link></li>
+              <li><Link href={portalHref("/modes")} className="hover:text-white transition-colors">All Modes</Link></li>
+              <li><Link href={portalHref("/about")} className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href={portalHref("/faq")} className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 
@@ -32,11 +45,11 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-4 text-white">Game Modes</h4>
             <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-              <li><Link href="/modes/br-ranked" className="hover:text-white transition-colors">BR Ranked</Link></li>
-              <li><Link href="/modes/br-duo" className="hover:text-white transition-colors">BR Duo</Link></li>
-              <li><Link href="/modes/br-squad" className="hover:text-white transition-colors">BR Squad</Link></li>
-              <li><Link href="/modes/cs-1v1" className="hover:text-white transition-colors">CS 1v1</Link></li>
-              <li><Link href="/modes/lw-1v1" className="hover:text-white transition-colors">LW 1v1</Link></li>
+              <li><Link href={portalHref("/modes/br-ranked")} className="hover:text-white transition-colors">BR Ranked</Link></li>
+              <li><Link href={portalHref("/modes/br-duo")} className="hover:text-white transition-colors">BR Duo</Link></li>
+              <li><Link href={portalHref("/modes/br-squad")} className="hover:text-white transition-colors">BR Squad</Link></li>
+              <li><Link href={portalHref("/modes/cs-1v1")} className="hover:text-white transition-colors">CS 1v1</Link></li>
+              <li><Link href={portalHref("/modes/lw-1v1")} className="hover:text-white transition-colors">LW 1v1</Link></li>
             </ul>
           </div>
 

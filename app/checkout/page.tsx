@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import StoreShell from "../_store/StoreShell";
 import { formatINR, storeProducts } from "../_store/catalog";
+import PlaceOrderButton from "./PlaceOrderButton";
 
 export const metadata = {
   title: "Checkout",
@@ -11,7 +12,7 @@ export const metadata = {
 export default function CheckoutPage() {
   const orderItems = [
     { product: storeProducts[0], qty: 1 },
-    { product: storeProducts[8], qty: 1 },
+    { product: storeProducts[6], qty: 1 },
     { product: storeProducts[5], qty: 1 },
   ];
 
@@ -26,8 +27,7 @@ export default function CheckoutPage() {
         <div className="mb-10 text-left">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Secure Checkout</h1>
           <p className="text-lg text-gray-600">
-            This page intentionally surfaces shipping address, billing summary, and policy links for
-            trust and payment-compliance clarity.
+            Secure your order with encrypted transaction processing. Delivery and tracking updates will be provided via email.
           </p>
         </div>
 
@@ -130,9 +130,7 @@ export default function CheckoutPage() {
               <span className="text-2xl font-black text-gray-900">{formatINR(total)}</span>
             </div>
 
-            <Link href="/dashboard?order=TF-APR-2026-001" className="w-full block text-center bg-green-600 text-white text-lg font-bold py-4 px-6 rounded-lg hover:bg-green-700 shadow-md hover:shadow-lg transition-all mb-6">
-              Place Demo Order
-            </Link>
+            <PlaceOrderButton />
             
             <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold text-gray-500">
               <Link href="/policies/terms" className="hover:text-orange-600 transition-colors">Terms</Link>

@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Flutter on Phone",
+			"type": "shell",
+			"command": "cd mobile && flutter run -d ZHVWKVSGZ9YDFQB6",
+			"isBackground": true
+		},
+		{
+			"label": "Run Flutter on Chrome",
+			"type": "shell",
+			"command": "cd mobile && flutter run -d chrome",
+			"isBackground": true
+		}
+	]
+}

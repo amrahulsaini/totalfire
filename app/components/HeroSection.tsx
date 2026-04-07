@@ -1,7 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  basePath?: string;
+}
+
+export default function HeroSection({ basePath = "" }: HeroSectionProps) {
+  const portalHref = (path: string) => {
+    if (!basePath) {
+      return path;
+    }
+    return path === "/" ? basePath : `${basePath}${path}`;
+  };
+
   return (
     <section className="hero-bg relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
       {/* Animated background particles */}
@@ -42,14 +53,14 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="animate-fade-in-up stagger-4 flex flex-col sm:flex-row gap-4 mt-10">
-            <Link href="/modes" className="fire-btn text-lg !py-4 !px-10">
+            <Link href={portalHref("/modes")} className="fire-btn text-lg !py-4 !px-10">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Browse Tournaments
             </Link>
-            <Link href="/about" className="outline-btn text-lg !py-4 !px-10">
+            <Link href={portalHref("/about")} className="outline-btn text-lg !py-4 !px-10">
               Learn More
             </Link>
           </div>

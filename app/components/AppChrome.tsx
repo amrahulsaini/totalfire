@@ -7,13 +7,13 @@ import Footer from "./Footer";
 
 export default function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAdminRoute = pathname.startsWith("/admin");
+  const isPortalRoute = pathname === "/main" || pathname.startsWith("/main/");
 
   return (
     <>
-      {!isAdminRoute && <Navbar />}
+      {isPortalRoute && <Navbar />}
       <main className="flex-1">{children}</main>
-      {!isAdminRoute && <Footer />}
+      {isPortalRoute && <Footer />}
     </>
   );
 }

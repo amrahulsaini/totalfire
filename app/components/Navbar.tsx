@@ -3,16 +3,26 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const portalBase = pathname.startsWith("/main") ? "/main" : "";
+
+  const portalHref = (path: string) => {
+    if (!portalBase) {
+      return path;
+    }
+    return path === "/" ? portalBase : `${portalBase}${path}`;
+  };
 
   return (
     <nav className="nav-glass fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
+          <Link href={portalHref("/")} className="flex items-center gap-3">
             <Image
               src="/totalfire-logo.webp"
               alt="TotalFire"
@@ -25,12 +35,12 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/modes" className="nav-link">Modes</Link>
-            <Link href="/about" className="nav-link">About</Link>
-            <Link href="/contact" className="nav-link">Contact</Link>
-            <Link href="/faq" className="nav-link">FAQ</Link>
-            <Link href="/modes" className="fire-btn text-sm !py-2 !px-5">
+            <Link href={portalHref("/")} className="nav-link">Home</Link>
+            <Link href={portalHref("/modes")} className="nav-link">Modes</Link>
+            <Link href={portalHref("/about")} className="nav-link">About</Link>
+            <Link href={portalHref("/contact")} className="nav-link">Contact</Link>
+            <Link href={portalHref("/faq")} className="nav-link">FAQ</Link>
+            <Link href={portalHref("/modes")} className="fire-btn text-sm !py-2 !px-5">
               Join Tournament
             </Link>
           </div>
@@ -56,12 +66,12 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden pb-4 animate-fade-in">
             <div className="flex flex-col gap-3">
-              <Link href="/" className="nav-link py-2" onClick={() => setMobileOpen(false)}>Home</Link>
-              <Link href="/modes" className="nav-link py-2" onClick={() => setMobileOpen(false)}>Modes</Link>
-              <Link href="/about" className="nav-link py-2" onClick={() => setMobileOpen(false)}>About</Link>
-              <Link href="/contact" className="nav-link py-2" onClick={() => setMobileOpen(false)}>Contact</Link>
-              <Link href="/faq" className="nav-link py-2" onClick={() => setMobileOpen(false)}>FAQ</Link>
-              <Link href="/modes" className="fire-btn text-sm text-center !py-2 mt-2" onClick={() => setMobileOpen(false)}>
+              <Link href={portalHref("/")} className="nav-link py-2" onClick={() => setMobileOpen(false)}>Home</Link>
+              <Link href={portalHref("/modes")} className="nav-link py-2" onClick={() => setMobileOpen(false)}>Modes</Link>
+              <Link href={portalHref("/about")} className="nav-link py-2" onClick={() => setMobileOpen(false)}>About</Link>
+              <Link href={portalHref("/contact")} className="nav-link py-2" onClick={() => setMobileOpen(false)}>Contact</Link>
+              <Link href={portalHref("/faq")} className="nav-link py-2" onClick={() => setMobileOpen(false)}>FAQ</Link>
+              <Link href={portalHref("/modes")} className="fire-btn text-sm text-center !py-2 mt-2" onClick={() => setMobileOpen(false)}>
                 Join Tournament
               </Link>
             </div>

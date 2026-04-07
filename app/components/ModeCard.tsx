@@ -11,6 +11,7 @@ interface ModeCardProps {
   perKill?: number;
   winPrize?: string;
   prizePool?: number;
+  basePath?: string;
 }
 
 export default function ModeCard({
@@ -23,12 +24,14 @@ export default function ModeCard({
   perKill,
   winPrize,
   prizePool,
+  basePath = "",
 }: ModeCardProps) {
   const badgeClass = category === "br" ? "badge-br" : category === "cs" ? "badge-cs" : "badge-lw";
   const categoryLabel = category === "br" ? "Battle Royale" : category === "cs" ? "Clash Squad" : "Lone Wolf";
+  const modeHref = `${basePath}/modes/${slug}`;
 
   return (
-    <Link href={`/modes/${slug}`} className="block">
+    <Link href={modeHref} className="block">
       <div className="mode-card">
         <div className="mode-card-image">
           <Image src={image} alt={title} fill className="object-contain" sizes="(max-width: 768px) 100vw, 33vw" />
