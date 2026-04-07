@@ -63,7 +63,7 @@ export default async function ShopPage({
           </form>
 
           <div className="flex flex-wrap gap-2 justify-center xl:justify-end w-full xl:w-auto">
-            {storeCategories.map((category) => {
+            {(["All", ...storeCategories] as const).map((category) => {
               const href =
                 category === "All"
                   ? "/shop"
