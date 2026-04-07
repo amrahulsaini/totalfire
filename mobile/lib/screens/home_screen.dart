@@ -31,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedMyStatus = 'upcoming';
   bool _isLoading = true;
   bool _isWalletBusy = false;
-  double? _pendingWalletAmount;
 
   @override
   void initState() {
@@ -162,9 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final orderId = response.orderId;
     final paymentId = response.paymentId;
     final signature = response.signature;
-    final amount = _pendingWalletAmount;
 
-    if (orderId == null || paymentId == null || signature == null || amount == null) {
+    if (orderId == null || paymentId == null || signature == null) {
       _showMessage('Payment data missing. Please contact support.', isError: true);
       return;
     }
@@ -174,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
       'razorpay_order_id': orderId,
       'razorpay_payment_id': paymentId,
       'razorpay_signature': signature,
-      'original_amount': amount,
     });
 
     if (!mounted) {
@@ -188,16 +185,12 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    setState(() {
-      _pendingWalletAmount = null;
-      _walletAmountController.text = '100';
-    });
+    setState(() => _walletAmountController.text = '100');
     _showMessage('Payment verified and wallet credited.');
     await _refreshWalletData();
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
-    setState(() => _pendingWalletAmount = null);
     _showMessage('Payment failed or cancelled. Please try again.', isError: true);
   }
 
@@ -242,8 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    setState(() => _pendingWalletAmount = amount);
-
     final options = {
       'key': key,
       'amount': amountPaise,
@@ -261,7 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       _razorpay.open(options);
     } catch (_) {
-      setState(() => _pendingWalletAmount = null);
       _showMessage('Unable to open Razorpay checkout.', isError: true);
     }
   }
