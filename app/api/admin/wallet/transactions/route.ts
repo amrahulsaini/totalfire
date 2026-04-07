@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { verifyAdmin } from "@/lib/auth";
 import pool from "@/lib/db";
 import type { RowDataPacket } from "mysql2";
 
 export async function GET(request: Request) {
-  const auth = await verifyAuth(request);
-  if (!auth.isAuthenticated || auth.user?.role !== "admin") {
+  const admin = await verifyAdmin(request);
+  if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

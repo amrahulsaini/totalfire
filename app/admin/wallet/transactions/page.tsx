@@ -16,7 +16,12 @@ export default function AllTransactionsPage() {
   const [data, setData] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/wallet/transactions")
+    const token = window.localStorage.getItem("adminToken") ?? "";
+    fetch("/api/admin/wallet/transactions", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then((json) => {
         if (json.success) setData(json.transactions);

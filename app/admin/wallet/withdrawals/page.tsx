@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
 
 interface Withdrawal {
   id: number;
@@ -14,12 +13,28 @@ interface Withdrawal {
 
 export default function AdminWithdrawalsPage() {
   const [data, setData] = useState<Withdrawal[]>([]);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const fetchWithdrawals = () => {
-    fetch("/api/admin/wallet/withdrawals")
+    const token = window.localStorage.getItem("adminToken") ?? "";
+    fetch("/api/admin/wallet/withdrawals", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then((json) => {
-        if (json.success) setData(json.withdrawals);
+        if (json.success) {
+          setData(json.withdrawals);
+          return;
+        }
+        setMessage({ type: "error", text: json.error || "Failed to load withdrawals" });
+      })
+      .catch(() => {
+        setMessage({ type: "error", text: "Failed to load withdrawals" });
       });
   };
 
@@ -28,23 +43,41 @@ export default function AdminWithdrawalsPage() {
   }, []);
 
   const handleAction = async (id: number, action: "approve" | "reject") => {
+    const token = window.localStorage.getItem("adminToken") ?? "";
     const res = await fetch("/api/admin/wallet/withdrawals", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ id, action }),
     });
     const json = await res.json();
     if (json.success) {
-      toast.success(`Withdrawal ${action}d successfully`);
+      setMessage({
+        type: "success",
+        text: `Withdrawal ${action === "approve" ? "approved" : "rejected"} successfully`,
+      });
       fetchWithdrawals();
     } else {
-      toast.error(json.error || "Failed action");
+      setMessage({ type: "error", text: json.error || "Failed action" });
     }
   };
 
   return (
     <main className="p-6">
       <h1 className="text-2xl font-bold mb-4">Review Withdraw Requests</h1>
+      {message && (
+        <div
+          className={`mb-4 rounded-lg border px-4 py-3 text-sm font-medium ${
+            message.type === "success"
+              ? "border-green-200 bg-green-50 text-green-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
       <table className="w-full text-left bg-white border border-gray-200 shadow-sm">
         <thead>
           <tr className="bg-gray-100 border-b">
