@@ -11,21 +11,51 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } catch (_) {
     // Firebase may already be initialized in some runtimes.
   }
+
+  // For data-only messages, render a local notification while app is in background.
+  if (message.notification == null) {
+    await PushService.showFromRemoteMessage(message);
+  }
 }
 
 class PushService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
+  static const String _androidChannelId = 'totalfire_alerts_v2';
+  static const String _androidChannelName = 'Total Fire Alerts';
+  static const String _androidChannelDescription =
+      'Tournament, wallet, and withdrawal updates';
+
   static const AndroidNotificationChannel _androidChannel =
       AndroidNotificationChannel(
-    'totalfire_alerts',
-    'Total Fire Alerts',
-    description: 'Tournament, wallet, and withdrawal updates',
-    importance: Importance.high,
+    _androidChannelId,
+    _androidChannelName,
+    description: _androidChannelDescription,
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
   );
 
   static bool _initialized = false;
+  static bool _localNotificationsReady = false;
+
+  static Future<void> _ensureLocalNotificationsReady() async {
+    if (_localNotificationsReady || kIsWeb) {
+      return;
+    }
+
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const settings = InitializationSettings(android: androidInit);
+    await _localNotifications.initialize(settings: settings);
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_androidChannel);
+
+    _localNotificationsReady = true;
+  }
 
   static Future<void> initialize({bool syncWithBackend = false}) async {
     if (_initialized || kIsWeb) {
@@ -41,14 +71,7 @@ class PushService {
       provisional: false,
     );
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: androidInit);
-    await _localNotifications.initialize(settings: settings);
-
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_androidChannel);
+      await _ensureLocalNotificationsReady();
 
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
@@ -96,22 +119,41 @@ class PushService {
   }
 
   static Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    await showFromRemoteMessage(message);
+  }
+
+  static Future<void> showFromRemoteMessage(RemoteMessage message) async {
+    if (kIsWeb) {
+      return;
+    }
+
+    await _ensureLocalNotificationsReady();
+
     final notification = message.notification;
-    if (notification == null) {
+    final title =
+        notification?.title ?? message.data['title']?.toString() ?? 'Total Fire';
+    final body = notification?.body ??
+        message.data['body']?.toString() ??
+        message.data['message']?.toString() ??
+        '';
+
+    if (title.trim().isEmpty && body.trim().isEmpty) {
       return;
     }
 
     await _localNotifications.show(
-      id: notification.hashCode,
-      title: notification.title ?? 'Total Fire',
-      body: notification.body ?? '',
+      id: notification?.hashCode ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'totalfire_alerts',
-          'Total Fire Alerts',
-          channelDescription: 'Tournament, wallet, and withdrawal updates',
-          importance: Importance.high,
-          priority: Priority.high,
+          _androidChannelId,
+          _androidChannelName,
+          channelDescription: _androidChannelDescription,
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          enableVibration: true,
           icon: '@mipmap/ic_launcher',
         ),
       ),

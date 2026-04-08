@@ -12,6 +12,8 @@ interface SendPushToUserInput {
   data?: Record<string, unknown>;
 }
 
+const ANDROID_PUSH_CHANNEL_ID = "totalfire_alerts_v2";
+
 function toStringMap(data?: Record<string, unknown>): Record<string, string> {
   if (!data) {
     return {};
@@ -88,9 +90,30 @@ export async function sendPushToUser(input: SendPushToUserInput) {
         title: input.title,
         body: input.body,
       },
-      data: toStringMap(input.data),
-      android: { priority: "high" },
-      apns: { headers: { "apns-priority": "10" } },
+      data: {
+        title: input.title,
+        body: input.body,
+        category: input.category,
+        ...toStringMap(input.data),
+      },
+      android: {
+        priority: "high",
+        notification: {
+          channelId: ANDROID_PUSH_CHANNEL_ID,
+          sound: "default",
+          defaultSound: true,
+          defaultVibrateTimings: true,
+          priority: "max",
+        },
+      },
+      apns: {
+        headers: { "apns-priority": "10" },
+        payload: {
+          aps: {
+            sound: "default",
+          },
+        },
+      },
     });
 
     for (let i = 0; i < response.responses.length; i += 1) {
