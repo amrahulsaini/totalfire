@@ -12,6 +12,12 @@
 			"type": "shell",
 			"command": "cd mobile && flutter run -d chrome",
 			"isBackground": true
+		},
+		{
+			"label": "Run Flutter on Phone (PS)",
+			"type": "shell",
+			"command": "Set-Location mobile; flutter run -d ZHVWKVSGZ9YDFQB6",
+			"isBackground": true
 		}
 	]
 }
