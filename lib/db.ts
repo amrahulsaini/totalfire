@@ -35,6 +35,7 @@ pool
     `ALTER TABLE withdrawal_requests
      ADD COLUMN IF NOT EXISTS method VARCHAR(30) NULL AFTER amount,
      ADD COLUMN IF NOT EXISTS account_details VARCHAR(255) NULL AFTER method,
+     ADD COLUMN IF NOT EXISTS upi_id VARCHAR(80) NULL AFTER account_details,
      ADD COLUMN IF NOT EXISTS processed_by INT NULL AFTER status,
      ADD COLUMN IF NOT EXISTS processed_at DATETIME NULL AFTER processed_by,
      ADD COLUMN IF NOT EXISTS admin_note VARCHAR(255) NULL AFTER processed_at`
@@ -51,6 +52,39 @@ pool
   )
   .catch(() => {
     // Non-fatal — status may already match or table may not exist.
+  });
+
+pool
+  .query(
+    `CREATE TABLE IF NOT EXISTS user_upi_accounts (
+      user_id INT PRIMARY KEY,
+      upi_id VARCHAR(80) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_user_upi_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      KEY idx_upi_id (upi_id)
+    )`
+  )
+  .catch(() => {
+    // Non-fatal — table migration should not block startup.
+  });
+
+pool
+  .query(
+    `ALTER TABLE modes
+     MODIFY COLUMN category ENUM('br','cs','lw','hs') NOT NULL`
+  )
+  .catch(() => {
+    // Non-fatal — mode category may already match or table may not exist.
+  });
+
+pool
+  .query(
+    `ALTER TABLE tournaments
+     MODIFY COLUMN category ENUM('br','cs','lw','hs') NOT NULL`
+  )
+  .catch(() => {
+    // Non-fatal — tournament category may already match or table may not exist.
   });
 
 pool

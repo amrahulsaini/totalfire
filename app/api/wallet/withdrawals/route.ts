@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   const [withdrawals] = await pool.query<RowDataPacket[]>(
-    `SELECT id, amount, method, account_details, status, processed_at, admin_note, created_at, updated_at
+    `SELECT id, amount, method, account_details, upi_id, status, processed_at, admin_note, created_at, updated_at
      FROM withdrawal_requests
      WHERE user_id = ?
      ORDER BY created_at DESC

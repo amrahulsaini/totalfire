@@ -421,6 +421,7 @@ class WithdrawalRequestItem {
     required this.status,
     required this.method,
     required this.accountDetails,
+    required this.upiId,
     required this.createdAt,
     required this.processedAt,
     required this.adminNote,
@@ -431,6 +432,7 @@ class WithdrawalRequestItem {
   final String status;
   final String? method;
   final String? accountDetails;
+  final String? upiId;
   final DateTime createdAt;
   final DateTime? processedAt;
   final String? adminNote;
@@ -443,6 +445,7 @@ class WithdrawalRequestItem {
       status: _stringValue(json['status']),
       method: _nullableStringValue(json['method']),
       accountDetails: _nullableStringValue(json['account_details']),
+      upiId: _nullableStringValue(json['upi_id']),
       createdAt: _dateValue(json['created_at']),
       processedAt: processedAtRaw == null ? null : _dateValue(processedAtRaw),
       adminNote: _nullableStringValue(json['admin_note']),

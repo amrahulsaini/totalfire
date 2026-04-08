@@ -43,15 +43,19 @@ export default async function ModeDetailPage({
     mode.category === "br"
       ? "var(--accent-primary)"
       : mode.category === "cs"
-      ? "var(--accent-blue)"
-      : "var(--accent-purple)";
+        ? "var(--accent-blue)"
+        : mode.category === "lw"
+          ? "var(--accent-purple)"
+          : "#14532d";
 
   const categoryLabel =
     mode.category === "br"
       ? "Battle Royale"
       : mode.category === "cs"
-      ? "Clash Squad"
-      : "Lone Wolf";
+        ? "Clash Squad"
+        : mode.category === "lw"
+          ? "Lone Wolf"
+          : "Headshot";
 
   return (
     <div className="page-enter pt-20 pb-20" style={{ background: "var(--bg-primary)" }}>

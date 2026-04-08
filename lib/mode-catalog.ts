@@ -12,7 +12,7 @@ type ModeRow = RowDataPacket & {
   slug: string;
   image: string;
   app_image: string;
-  category: "br" | "cs" | "lw";
+  category: "br" | "cs" | "lw" | "hs";
   players_label: string;
   max_players: number;
   team_size: number;

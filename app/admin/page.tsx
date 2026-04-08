@@ -32,7 +32,7 @@ type TournamentRecord = {
   mode_id: number;
   title: string;
   mode_slug: string;
-  category: "br" | "cs" | "lw";
+  category: "br" | "cs" | "lw" | "hs";
   max_players: number;
   team_size: number;
   entry_fee: number;
@@ -76,7 +76,7 @@ type CreateTournamentForm = {
   modeId: number;
   title: string;
   modeSlug: string;
-  category: "br" | "cs" | "lw";
+  category: "br" | "cs" | "lw" | "hs";
   maxPlayers: number;
   teamSize: number;
   entryFee: number;
@@ -528,6 +528,12 @@ export default function AdminDashboardPage() {
           </Link>
           <Link href="/admin/wallet/withdrawals" className="outline-btn !px-4 !py-2 !text-sm">
             User Withdrawal Requests
+          </Link>
+          <Link href="/admin/notifications" className="outline-btn !px-4 !py-2 !text-sm">
+            Send Tournament Notifications
+          </Link>
+          <Link href="/admin/modes" className="outline-btn !px-4 !py-2 !text-sm">
+            Edit Modes Portal
           </Link>
         </div>
 

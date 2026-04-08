@@ -10,6 +10,7 @@ interface Withdrawal {
   amount: number;
   method?: string;
   account_details?: string;
+  upi_id?: string;
   status: string;
   created_at: string;
 }
@@ -129,6 +130,7 @@ export default function AdminWithdrawalsPage() {
                 <th className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>Amount</th>
                 <th className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>Method</th>
                 <th className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>Details</th>
+                <th className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>UPI ID</th>
                 <th className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>Status</th>
                 <th className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>Actions</th>
               </tr>
@@ -136,13 +138,13 @@ export default function AdminWithdrawalsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-6 text-sm" style={{ color: "var(--text-secondary)" }}>
+                  <td colSpan={8} className="p-6 text-sm" style={{ color: "var(--text-secondary)" }}>
                     Loading withdrawal requests...
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-6 text-sm" style={{ color: "var(--text-secondary)" }}>
+                  <td colSpan={8} className="p-6 text-sm" style={{ color: "var(--text-secondary)" }}>
                     No withdrawal requests found yet.
                   </td>
                 </tr>
@@ -154,6 +156,7 @@ export default function AdminWithdrawalsPage() {
                     <td className="p-4 text-sm font-bold" style={{ color: "var(--text-primary)" }}>INR {req.amount}</td>
                     <td className="p-4 text-sm" style={{ color: "var(--text-primary)" }}>{req.method || "-"}</td>
                     <td className="p-4 text-sm" style={{ color: "var(--text-secondary)" }}>{req.account_details || "-"}</td>
+                    <td className="p-4 text-sm" style={{ color: "var(--text-secondary)" }}>{req.upi_id || "-"}</td>
                     <td className="p-4">
                       <span
                         className="rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide"

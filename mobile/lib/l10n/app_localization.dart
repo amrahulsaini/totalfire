@@ -94,6 +94,11 @@ class AppLocalization {
     'Pay With Razorpay': 'रेज़रपे से भुगतान करें',
     'Verify Payment': 'भुगतान सत्यापित करें',
     'Request Withdrawal': 'निकासी अनुरोध करें',
+    'Open Withdrawal Center': 'निकासी केंद्र खोलें',
+    'Open Payments History': 'पेमेंट हिस्ट्री खोलें',
+    'Withdrawal Center': 'निकासी केंद्र',
+    'Submit Withdrawal': 'निकासी जमा करें',
+    'Withdrawal History': 'निकासी इतिहास',
     'Open Payments & Requests': 'पेमेंट और रिक्वेस्ट खोलें',
     'Recent Transactions': 'हाल के लेनदेन',
     'No wallet activity yet': 'अभी कोई वॉलेट गतिविधि नहीं',
@@ -102,6 +107,7 @@ class AppLocalization {
     'Notifications': 'सूचनाएं',
     'Browse Modes': 'मोड्स ब्राउज़ करें',
     'Payments & Withdrawals': 'पेमेंट और निकासी',
+    'Payments History': 'पेमेंट हिस्ट्री',
     'My Upcoming Matches': 'मेरे आगामी मैच',
     'Wallet History': 'वॉलेट हिस्ट्री',
     'Logout': 'लॉगआउट',
@@ -154,6 +160,7 @@ class AppLocalization {
     'Battle Royale': 'बैटल रॉयल',
     'Clash Squad': 'क्लैश स्क्वाड',
     'Lone Wolf': 'लोन वुल्फ',
+    'Headshot': 'हेडशॉट',
     'Mode': 'मोड',
   };
 

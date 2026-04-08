@@ -412,12 +412,15 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse> requestWithdrawal(double amount) async {
+  static Future<ApiResponse> requestWithdrawal(double amount, String upiId) async {
     try {
       final result = await _request(
         'POST',
         '/api/wallet/withdraw',
-        body: {'amount': amount},
+        body: {
+          'amount': amount,
+          'upiId': upiId,
+        },
       );
 
       if (result.statusCode == 200) {

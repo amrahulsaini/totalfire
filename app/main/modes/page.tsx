@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Dog, DollarSign, Flame, Lock, Swords, Target, XCircle } from "lucide-react";
+import { Crosshair, Dog, DollarSign, Flame, Lock, Swords, Target, XCircle } from "lucide-react";
 import ModesShowcase from "../../components/ModesShowcase";
 
 export const metadata: Metadata = {
   title: "All Tournament Modes",
   description:
-    "Browse all esports tournament modes - BR Solo, Duo, Squad, CS 1v1, 2v2, 4v4, LW 1v1, 2v2.",
+    "Browse all esports tournament modes across BR, CS, LW, and Headshot categories.",
 };
 
 export default function MainModesPage() {
@@ -17,7 +17,7 @@ export default function MainModesPage() {
             Tournament <span className="fire-text">Modes</span>
           </h1>
           <p className="section-subheading">
-            Choose from 8 different game modes. Every entry fee contributes to your skill-based rewards.
+            Choose from all available game modes. Every entry fee contributes to your skill-based rewards.
             All payments are secured via Razorpay. No refunds once registered.
           </p>
         </div>
@@ -40,6 +40,12 @@ export default function MainModesPage() {
             style={{ background: "rgba(108,71,160,0.1)", color: "var(--accent-purple)" }}
           >
             <Dog size={16} /> Lone Wolf
+          </span>
+          <span
+            className="px-5 py-2 rounded-full text-sm font-bold cursor-default flex items-center gap-1.5"
+            style={{ background: "rgba(20,83,45,0.1)", color: "#14532d" }}
+          >
+            <Crosshair size={16} /> Headshot
           </span>
         </div>
 

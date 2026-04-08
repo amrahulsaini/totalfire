@@ -180,6 +180,34 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF7ED),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFFED7AA)),
+                                    ),
+                                    child: const Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Icon(Icons.warning_amber_rounded, color: Color(0xFF9A3412), size: 18),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Warning: Room ID and password are private. Do not share these details publicly or your slot may be compromised.',
+                                            style: TextStyle(
+                                              color: Color(0xFF9A3412),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
                                   _RoomLine(
                                     label: tx('Room ID'),
                                     value: detail.tournament.roomId ?? '-',

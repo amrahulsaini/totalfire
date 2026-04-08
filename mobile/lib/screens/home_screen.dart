@@ -17,6 +17,7 @@ import 'category_modes_screen.dart';
 import 'notifications_screen.dart';
 import 'payments_screen.dart';
 import 'tournament_detail_screen.dart';
+import 'withdrawal_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,7 +28,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Razorpay _razorpay = Razorpay();
-  final TextEditingController _withdrawAmountController = TextEditingController();
   final TextEditingController _walletAmountController =
       TextEditingController(text: '100');
 
@@ -57,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _razorpay.clear();
     _walletAmountController.dispose();
-    _withdrawAmountController.dispose();
     super.dispose();
   }
 
@@ -350,39 +349,21 @@ class _HomeScreenState extends State<HomeScreen> {
     await _refreshNotificationsCount();
   }
 
-  Future<void> _handleWithdrawMoney() async {
-    final amount = double.tryParse(_withdrawAmountController.text.trim());
-    if (amount == null || amount <= 0) {
-      _showMessage('Enter a valid withdrawal amount.', isError: true);
-      return;
-    }
-
-    setState(() => _isWalletBusy = true);
-    final response = await ApiService.requestWithdrawal(amount);
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() => _isWalletBusy = false);
-
-    if (!response.success) {
-      _showMessage(response.message, isError: true);
-      return;
-    }
-
-    _withdrawAmountController.clear();
-    _showMessage('Withdrawal request submitted. Wallet will be deducted after admin marks deposited.');
-    await _refreshWalletData();
-    await _refreshNotificationsCount();
-  }
-
   Future<void> _openPaymentsScreen() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PaymentsScreen()),
     );
     await _loadDashboard(showLoader: false);
+  }
+
+  Future<void> _openWithdrawalScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const WithdrawalScreen()),
+    );
+    await _loadDashboard(showLoader: false);
+    await _refreshNotificationsCount();
   }
 
   Future<void> _openNotificationsScreen() async {
@@ -624,7 +605,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => _openCategory('cs'),
                 ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Expanded(
                 child: _CategoryCard(
                   label: 'Lone\nWolf',
@@ -632,6 +618,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   accentColor: const Color(0xFF6C47A0),
                   modeCount: _modes.where((m) => m.category == 'lw').length,
                   onTap: () => _openCategory('lw'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _CategoryCard(
+                  label: 'Headshot\nOnly',
+                  icon: Icons.gps_fixed,
+                  accentColor: const Color(0xFF14532D),
+                  modeCount: _modes.where((m) => m.category == 'hs').length,
+                  onTap: () => _openCategory('hs'),
                 ),
               ),
             ],
@@ -724,7 +720,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Add money with Razorpay and request withdrawals directly from this screen.',
+            'Add money with Razorpay here. Use the separate Withdrawal Center for payout requests.',
             style: TextStyle(color: AppColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 20),
@@ -756,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Use Razorpay to top up instantly. Withdrawal request does not deduct money until admin confirms deposited.',
+                  'Use Razorpay to top up instantly. Withdrawals are managed from the dedicated Withdrawal Center.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 16),
@@ -825,30 +821,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
                 const Divider(height: 1),
                 const SizedBox(height: 20),
-                Text(
-                  tx('Withdraw Money'),
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _withdrawAmountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Withdraw amount',
-                    prefixIcon: Icon(Icons.currency_rupee),
-                  ),
-                ),
-                const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: _isWalletBusy ? null : _handleWithdrawMoney,
+                    onPressed: _openWithdrawalScreen,
                     icon: const Icon(Icons.south_west_rounded),
-                    label: Text(tx('Request Withdrawal')),
+                    label: Text(tx('Open Withdrawal Center')),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -857,7 +835,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _openPaymentsScreen,
                     icon: const Icon(Icons.payments_outlined),
-                    label: Text(tx('Open Payments & Requests')),
+                    label: Text(tx('Open Payments History')),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -1844,6 +1822,8 @@ String _categoryLabel(BuildContext context, String category) {
       return tx('Clash Squad');
     case 'lw':
       return tx('Lone Wolf');
+    case 'hs':
+      return tx('Headshot');
     default:
       return tx('Mode');
   }

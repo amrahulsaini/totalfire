@@ -1,4 +1,4 @@
-export type ModeCategory = "br" | "cs" | "lw";
+export type ModeCategory = "br" | "cs" | "lw" | "hs";
 
 export interface RewardBreakdownItem {
   label: string;
@@ -266,6 +266,96 @@ export const allModes: ModeConfig[] = [
       { label: "Per Kill", value: "No kill reward" },
       { label: "Winner Prize", value: "₹40 per member" },
       { label: "Teams", value: "2 teams of 2" },
+    ],
+  },
+  {
+    id: 9,
+    title: "HS 1 vs 1",
+    slug: "hs-1v1",
+    image: "/modes-images/app-inside/hs1vs1.webp",
+    appImage: "/modes-images/app-inside/hs1vs1.webp",
+    category: "hs",
+    players: "2 Players",
+    maxPlayers: 2,
+    teamSize: 1,
+    entryFee: 25,
+    winPrize: "₹40 to Winner",
+    fullDescription:
+      "Headshot Only 1v1 is a precision duel where body shots do not count. There is no kill payout. The winner receives ₹40 after admin result verification.",
+    rules: [
+      "2 players only",
+      "Headshot only mode",
+      "Entry fee: ₹25 per player",
+      "No per kill reward",
+      "Winner receives ₹40",
+      "Room details unlock close to match time",
+      "Admins verify results before payout",
+    ],
+    rewardBreakdown: [
+      { label: "Entry Fee", value: "₹25 per player" },
+      { label: "Per Kill", value: "No kill reward" },
+      { label: "Winner Prize", value: "₹40" },
+      { label: "Slots", value: "2 players" },
+    ],
+  },
+  {
+    id: 10,
+    title: "HS 2 vs 2",
+    slug: "hs-2v2",
+    image: "/modes-images/app-inside/hs2vs2.webp",
+    appImage: "/modes-images/app-inside/hs2vs2.webp",
+    category: "hs",
+    players: "4 Players (2×2)",
+    maxPlayers: 4,
+    teamSize: 2,
+    entryFee: 25,
+    winPrize: "₹40/member",
+    fullDescription:
+      "Headshot Only 2v2 features two teams of two in a tactical close-range format. There is no kill payout. Each winning member receives ₹40.",
+    rules: [
+      "2 teams, 2 players each",
+      "Headshot only mode",
+      "Entry fee: ₹25 per player",
+      "No per kill reward",
+      "Winning team members receive ₹40 each",
+      "Slot grouping follows team order",
+      "Admins verify winners and settle rewards",
+    ],
+    rewardBreakdown: [
+      { label: "Entry Fee", value: "₹25 per player" },
+      { label: "Per Kill", value: "No kill reward" },
+      { label: "Winner Prize", value: "₹40 per member" },
+      { label: "Teams", value: "2 teams of 2" },
+    ],
+  },
+  {
+    id: 11,
+    title: "HS 4 vs 4",
+    slug: "hs-4v4",
+    image: "/modes-images/app-inside/hs4vs4.webp",
+    appImage: "/modes-images/app-inside/hs4vs4.webp",
+    category: "hs",
+    players: "8 Players (4×4)",
+    maxPlayers: 8,
+    teamSize: 4,
+    entryFee: 25,
+    winPrize: "₹45/member (₹180)",
+    fullDescription:
+      "Headshot Only 4v4 is a team-based elimination format focused on precision and positioning. There is no kill payout. Each winning member receives ₹45.",
+    rules: [
+      "2 teams, 4 players each",
+      "Headshot only mode",
+      "Entry fee: ₹25 per player",
+      "No per kill reward",
+      "Winning team members receive ₹45 each",
+      "Teams are assigned in grouped slots",
+      "Admins publish final rewards after result entry",
+    ],
+    rewardBreakdown: [
+      { label: "Entry Fee", value: "₹25 per player" },
+      { label: "Per Kill", value: "No kill reward" },
+      { label: "Winner Prize", value: "₹45 per member" },
+      { label: "Teams", value: "2 teams of 4" },
     ],
   },
 ];

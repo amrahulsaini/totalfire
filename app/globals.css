@@ -343,6 +343,11 @@ body {
   color: white;
 }
 
+.badge-hs {
+  background: rgba(20, 83, 45, 0.9);
+  color: white;
+}
+
 /* ===== NAVIGATION ===== */
 .nav-glass {
   background: rgba(245, 240, 234, 0.92);

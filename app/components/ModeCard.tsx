@@ -5,7 +5,7 @@ interface ModeCardProps {
   title: string;
   slug: string;
   image: string;
-  category: "br" | "cs" | "lw";
+  category: "br" | "cs" | "lw" | "hs";
   players: string;
   entryFee: number;
   perKill?: number;
@@ -26,8 +26,22 @@ export default function ModeCard({
   prizePool,
   basePath = "",
 }: ModeCardProps) {
-  const badgeClass = category === "br" ? "badge-br" : category === "cs" ? "badge-cs" : "badge-lw";
-  const categoryLabel = category === "br" ? "Battle Royale" : category === "cs" ? "Clash Squad" : "Lone Wolf";
+  const badgeClass =
+    category === "br"
+      ? "badge-br"
+      : category === "cs"
+        ? "badge-cs"
+        : category === "lw"
+          ? "badge-lw"
+          : "badge-hs";
+  const categoryLabel =
+    category === "br"
+      ? "Battle Royale"
+      : category === "cs"
+        ? "Clash Squad"
+        : category === "lw"
+          ? "Lone Wolf"
+          : "Headshot";
   const modeHref = `${basePath}/modes/${slug}`;
 
   return (
