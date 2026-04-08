@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { sendPushToUser } from "@/lib/push";
 import type { RowDataPacket } from "mysql2";
 
 export type AppNotificationType =
@@ -34,6 +35,14 @@ export async function createUserNotification(input: CreateNotificationInput) {
       stringifyPayload(input.payload),
     ]
   );
+
+  void sendPushToUser({
+    userId: input.userId,
+    category: input.type,
+    title: input.title,
+    body: input.message,
+    data: input.payload,
+  });
 }
 
 interface NotifyTournamentParticipantsInput {

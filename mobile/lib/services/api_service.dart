@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_models.dart';
@@ -584,6 +585,89 @@ class ApiService {
       return const ApiResponse(
         success: false,
         message: 'Connection failed. Check your network.',
+      );
+    }
+  }
+
+  static String _detectPushPlatform() {
+    if (kIsWeb) {
+      return 'web';
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.android:
+        return 'android';
+      default:
+        return 'android';
+    }
+  }
+
+  static Future<ApiResponse> registerPushToken({
+    required String token,
+    String? platform,
+    String? deviceId,
+    String? appVersion,
+  }) async {
+    final cleanedToken = token.trim();
+    if (cleanedToken.isEmpty) {
+      return const ApiResponse(success: false, message: 'Invalid FCM token');
+    }
+
+    try {
+      final result = await _request(
+        'POST',
+        '/api/push/token',
+        body: {
+          'fcmToken': cleanedToken,
+          'platform': platform ?? _detectPushPlatform(),
+          if (deviceId != null && deviceId.isNotEmpty) 'deviceId': deviceId,
+          if (appVersion != null && appVersion.isNotEmpty) 'appVersion': appVersion,
+        },
+      );
+
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'Push token registered');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to register push token',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed while registering push token.',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deactivatePushToken(String token) async {
+    final cleanedToken = token.trim();
+    if (cleanedToken.isEmpty) {
+      return const ApiResponse(success: false, message: 'Invalid FCM token');
+    }
+
+    try {
+      final result = await _request(
+        'DELETE',
+        '/api/push/token',
+        body: {'fcmToken': cleanedToken},
+      );
+
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'Push token deactivated');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to deactivate push token',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed while deactivating push token.',
       );
     }
   }

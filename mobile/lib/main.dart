@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'theme/app_theme.dart';
 import 'services/api_service.dart';
+import 'services/push_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'widgets/three_dots_loader.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -15,6 +19,17 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      await PushService.initialize(syncWithBackend: false);
+    } catch (_) {
+      // App can still run if Firebase is temporarily unavailable.
+    }
+  }
+
   runApp(const TotalFireApp());
 }
 

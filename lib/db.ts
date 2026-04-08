@@ -73,4 +73,48 @@ pool
     // Non-fatal — table migration should not block startup.
   });
 
+pool
+  .query(
+    `CREATE TABLE IF NOT EXISTS user_push_tokens (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      platform ENUM('android','ios','web') NOT NULL DEFAULT 'android',
+      fcm_token VARCHAR(255) NOT NULL,
+      device_id VARCHAR(120) DEFAULT NULL,
+      app_version VARCHAR(40) DEFAULT NULL,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      last_seen_at DATETIME DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_push_token_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE KEY uq_push_fcm_token (fcm_token),
+      KEY idx_push_user_active (user_id, is_active),
+      KEY idx_push_active_updated (is_active, updated_at)
+    )`
+  )
+  .catch(() => {
+    // Non-fatal — table migration should not block startup.
+  });
+
+pool
+  .query(
+    `CREATE TABLE IF NOT EXISTS user_notification_preferences (
+      user_id INT PRIMARY KEY,
+      allow_push TINYINT(1) NOT NULL DEFAULT 1,
+      allow_wallet TINYINT(1) NOT NULL DEFAULT 1,
+      allow_withdrawal TINYINT(1) NOT NULL DEFAULT 1,
+      allow_tournament TINYINT(1) NOT NULL DEFAULT 1,
+      allow_engagement TINYINT(1) NOT NULL DEFAULT 1,
+      allow_promotions TINYINT(1) NOT NULL DEFAULT 1,
+      quiet_hours_start TIME DEFAULT NULL,
+      quiet_hours_end TIME DEFAULT NULL,
+      timezone VARCHAR(40) NOT NULL DEFAULT 'Asia/Kolkata',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_notification_pref_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`
+  )
+  .catch(() => {
+    // Non-fatal — table migration should not block startup.
+  });
+
 export default pool;

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "892506053801",
+    "project_id": "totalfire-46d2a",
+    "storage_bucket": "totalfire-46d2a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:892506053801:android:5fb13556a1c89c0dbd1db8",
+        "android_client_info": {
+          "package_name": "com.totalfire.totalfire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMm7lKpuV76rEnaJvZS2XyAx5CgH1MohE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

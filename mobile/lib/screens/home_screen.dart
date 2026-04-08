@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
+import '../services/push_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_utils.dart';
 import '../widgets/three_dots_loader.dart';
@@ -91,6 +93,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _transactions = transactions;
         _unreadNotifications = notifications.unreadCount;
       });
+
+      unawaited(PushService.syncTokenWithBackend());
     } catch (error) {
       if (error is ApiException && error.statusCode == 401) {
         await _forceLogout(message: error.message);
@@ -412,6 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _forceLogout({String? message}) async {
+    await PushService.unregisterCurrentToken();
     await ApiService.logout();
     if (!mounted) {
       return;
