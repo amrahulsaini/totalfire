@@ -128,6 +128,15 @@ CREATE TABLE IF NOT EXISTS withdrawal_requests (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Per-user app settings (language preference synced from mobile app)
+CREATE TABLE IF NOT EXISTS user_app_settings (
+  user_id INT PRIMARY KEY,
+  language_code ENUM('en', 'hi') NOT NULL DEFAULT 'en',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Create trigger to auto-create wallet for new users
 DROP TRIGGER IF EXISTS after_user_insert;
 DELIMITER //

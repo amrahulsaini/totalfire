@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+
+class AppLocalization {
+  static const String defaultLanguageCode = 'en';
+  static const List<Locale> supportedLocales = [
+    Locale('en'),
+    Locale('hi'),
+  ];
+
+  static const Map<String, String> _hi = {
+    'Choose App Language': 'ऐप भाषा चुनें',
+    'Select your preferred language. You can change it anytime from settings.':
+        'अपनी पसंदीदा भाषा चुनें। आप इसे कभी भी सेटिंग्स से बदल सकते हैं।',
+    'Continue in English': 'अंग्रेजी में जारी रखें',
+    'हिंदी में जारी रखें': 'हिंदी में जारी रखें',
+    'Language': 'भाषा',
+    'Language updated': 'भाषा अपडेट हो गई',
+    'Failed to update language': 'भाषा अपडेट नहीं हो सकी',
+    'English': 'अंग्रेज़ी',
+    'Hindi': 'हिंदी',
+    'Contact Support': 'सपोर्ट से संपर्क करें',
+    'Need help with payments, rooms, slots, or account issues? Reach us directly:':
+        'पेमेंट, रूम, स्लॉट या अकाउंट से जुड़ी मदद चाहिए? सीधे संपर्क करें:',
+    'WhatsApp: 7878159565': 'व्हाट्सऐप: 7878159565',
+    'Telegram: @total_fire': 'टेलीग्राम: @total_fire',
+    'Open WhatsApp': 'व्हाट्सऐप खोलें',
+    'Open Telegram': 'टेलीग्राम खोलें',
+    'Support channels could not be opened.': 'सपोर्ट लिंक नहीं खुल पाया।',
+    'Total Fire': 'टोटल फायर',
+    'Welcome back': 'वापसी पर स्वागत है',
+    'Welcome back, warrior': 'वापसी पर स्वागत है, योद्धा',
+    'Email or Username': 'ईमेल या यूज़रनेम',
+    'Enter your email or username': 'अपना ईमेल या यूज़रनेम दर्ज करें',
+    'Please enter your email or username': 'कृपया अपना ईमेल या यूज़रनेम दर्ज करें',
+    'Password': 'पासवर्ड',
+    'Enter your password': 'अपना पासवर्ड दर्ज करें',
+    'Please enter your password': 'कृपया अपना पासवर्ड दर्ज करें',
+    'Forgot Password?': 'पासवर्ड भूल गए?',
+    'Log In': 'लॉग इन',
+    'OR': 'या',
+    'Continue with Google': 'गूगल से जारी रखें',
+    "Don't have an account? ": 'क्या आपका अकाउंट नहीं है? ',
+    'Sign Up': 'साइन अप',
+    'Create your account & start competing': 'अपना अकाउंट बनाएं और खेलना शुरू करें',
+    'Full Name': 'पूरा नाम',
+    'Enter your full name': 'अपना पूरा नाम दर्ज करें',
+    'Please enter your full name': 'कृपया अपना पूरा नाम दर्ज करें',
+    'Name must be at least 2 characters': 'नाम कम से कम 2 अक्षर का होना चाहिए',
+    'Username': 'यूज़रनेम',
+    'Choose a unique username': 'एक यूनिक यूज़रनेम चुनें',
+    'Please choose a username': 'कृपया यूज़रनेम चुनें',
+    'Username must be at least 3 characters': 'यूज़रनेम कम से कम 3 अक्षर का होना चाहिए',
+    'Only letters, numbers, dots and underscores':
+        'सिर्फ अक्षर, अंक, डॉट और अंडरस्कोर मान्य हैं',
+    'Email': 'ईमेल',
+    'Enter your email address': 'अपना ईमेल पता दर्ज करें',
+    'Please enter your email': 'कृपया अपना ईमेल दर्ज करें',
+    'Please enter a valid email': 'कृपया सही ईमेल दर्ज करें',
+    'Mobile Number': 'मोबाइल नंबर',
+    'Enter 10-digit mobile number': '10 अंकों का मोबाइल नंबर दर्ज करें',
+    'Please enter your mobile number': 'कृपया अपना मोबाइल नंबर दर्ज करें',
+    'Mobile number must be 10 digits': 'मोबाइल नंबर 10 अंकों का होना चाहिए',
+    'Create a strong password': 'मजबूत पासवर्ड बनाएं',
+    'Please create a password': 'कृपया पासवर्ड बनाएं',
+    'Password must be at least 8 characters': 'पासवर्ड कम से कम 8 अक्षर का होना चाहिए',
+    'Include at least one uppercase letter': 'कम से कम एक बड़ा अक्षर शामिल करें',
+    'Include at least one number': 'कम से कम एक अंक शामिल करें',
+    'Confirm Password': 'पासवर्ड की पुष्टि करें',
+    'Re-enter your password': 'पासवर्ड दोबारा दर्ज करें',
+    'Please confirm your password': 'कृपया पासवर्ड की पुष्टि करें',
+    'Passwords do not match': 'पासवर्ड मेल नहीं खाते',
+    'Please agree to the Terms & Conditions': 'कृपया नियम और शर्तें स्वीकार करें',
+    'I agree to the ': 'मैं सहमत हूं ',
+    'Terms & Conditions': 'नियम और शर्तें',
+    ' and ': ' और ',
+    'Privacy Policy': 'प्राइवेसी पॉलिसी',
+    'Register': 'रजिस्टर',
+    'Already have an account? ': 'क्या आपके पास पहले से अकाउंट है? ',
+    'Login': 'लॉगिन',
+    'Modes': 'मोड्स',
+    'My Matches': 'मेरे मैच',
+    'Wallet': 'वॉलेट',
+    'Profile': 'प्रोफाइल',
+    'My Tournaments': 'मेरे टूर्नामेंट',
+    'Upcoming': 'आगामी',
+    'Active': 'सक्रिय',
+    'Completed': 'पूर्ण',
+    'No matches in this state': 'इस स्थिति में कोई मैच नहीं है',
+    'Join a tournament from the Modes tab and it will appear here.':
+        'मोड्स टैब से टूर्नामेंट जॉइन करें, वह यहां दिखाई देगा।',
+    'Wallet Actions': 'वॉलेट कार्य',
+    'Add Money': 'पैसे जोड़ें',
+    'Withdraw Money': 'पैसे निकालें',
+    'Pay With Razorpay': 'रेज़रपे से भुगतान करें',
+    'Verify Payment': 'भुगतान सत्यापित करें',
+    'Request Withdrawal': 'निकासी अनुरोध करें',
+    'Open Payments & Requests': 'पेमेंट और रिक्वेस्ट खोलें',
+    'Recent Transactions': 'हाल के लेनदेन',
+    'No wallet activity yet': 'अभी कोई वॉलेट गतिविधि नहीं',
+    'Credits, debits, entry fees, and match rewards will appear here.':
+        'क्रेडिट, डेबिट, एंट्री फीस और मैच रिवॉर्ड यहां दिखेंगे।',
+    'Notifications': 'सूचनाएं',
+    'Browse Modes': 'मोड्स ब्राउज़ करें',
+    'Payments & Withdrawals': 'पेमेंट और निकासी',
+    'My Upcoming Matches': 'मेरे आगामी मैच',
+    'Wallet History': 'वॉलेट हिस्ट्री',
+    'Logout': 'लॉगआउट',
+    'Mark all read': 'सभी पढ़ा हुआ करें',
+    'Delete all': 'सभी हटाएं',
+    'Delete all notifications?': 'सभी सूचनाएं हटाएं?',
+    'This action cannot be undone.': 'इस क्रिया को वापस नहीं किया जा सकता।',
+    'Cancel': 'रद्द करें',
+    'Delete All': 'सभी हटाएं',
+    'No notifications yet': 'अभी कोई सूचना नहीं',
+    'Wallet updates, withdrawal actions, and tournament events will appear here.':
+        'वॉलेट अपडेट, निकासी अपडेट और टूर्नामेंट इवेंट यहां दिखाई देंगे।',
+    'Transactions': 'लेनदेन',
+    'Withdrawals': 'निकासी',
+    'Current Wallet Balance': 'वर्तमान वॉलेट बैलेंस',
+    'No transactions yet': 'अभी कोई लेनदेन नहीं',
+    'Top-ups, entry fees, rewards, and withdrawals will appear here.':
+        'टॉप-अप, एंट्री फीस, रिवॉर्ड और निकासी यहां दिखेंगे।',
+    'No withdrawal requests yet': 'अभी कोई निकासी अनुरोध नहीं',
+    'When you request a withdrawal, status updates will appear here.':
+        'जब आप निकासी अनुरोध करेंगे, उसकी स्थिति यहां दिखाई देगी।',
+    'Match Details': 'मैच विवरण',
+    'Tournament unavailable': 'टूर्नामेंट उपलब्ध नहीं',
+    'Your Slot': 'आपका स्लॉट',
+    'Room Access': 'रूम एक्सेस',
+    'Refresh': 'रिफ्रेश',
+    'Room ID and password unlock 5 minutes before match start.':
+        'मैच शुरू होने से 5 मिनट पहले रूम आईडी और पासवर्ड अनलॉक होंगे।',
+    'Room ID': 'रूम आईडी',
+    'Joined Players': 'जुड़े हुए खिलाड़ी',
+    'No players have joined this match yet.': 'अभी इस मैच में कोई खिलाड़ी नहीं जुड़ा है।',
+    'Results & Rewards': 'परिणाम और रिवॉर्ड',
+    'Choose Your Seat': 'अपनी सीट चुनें',
+    'Available': 'उपलब्ध',
+    'Taken': 'भरी हुई',
+    'Your Seat': 'आपकी सीट',
+    'Selected': 'चयनित',
+    'Winner': 'विजेता',
+    'Mode Details': 'मोड विवरण',
+    'Overview': 'ओवरव्यू',
+    'Rules': 'नियम',
+    'Reward Breakdown': 'रिवॉर्ड विवरण',
+    'Upcoming Matches': 'आगामी मैच',
+    'Entry': 'एंट्री',
+    'View Tournaments': 'टूर्नामेंट देखें',
+    'No modes available in this category.': 'इस श्रेणी में कोई मोड उपलब्ध नहीं है।',
+    'Mode details unavailable': 'मोड विवरण उपलब्ध नहीं है',
+    'No upcoming match has been created for this mode yet. Ask admin to open a tournament slot.':
+      'इस मोड के लिए अभी कोई आगामी मैच नहीं बना है। एडमिन से टूर्नामेंट स्लॉट खोलने के लिए कहें।',
+    'Battle Royale': 'बैटल रॉयल',
+    'Clash Squad': 'क्लैश स्क्वाड',
+    'Lone Wolf': 'लोन वुल्फ',
+    'Mode': 'मोड',
+  };
+
+  static String translateForCode(String languageCode, String text) {
+    if (languageCode == 'hi') {
+      return _hi[text] ?? text;
+    }
+    return text;
+  }
+
+  static String translate(BuildContext context, String text) {
+    final languageCode = Localizations.localeOf(context).languageCode;
+    return translateForCode(languageCode, text);
+  }
+}
+
+extension AppLocalizationX on BuildContext {
+  String tx(String text) => AppLocalization.translate(this, text);
+}

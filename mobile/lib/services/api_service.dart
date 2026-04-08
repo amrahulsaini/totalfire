@@ -672,6 +672,55 @@ class ApiService {
     }
   }
 
+  static Future<String?> getLanguagePreferenceFromCloud() async {
+    try {
+      final result = await _request('GET', '/api/user/language');
+      if (result.statusCode != 200) {
+        return null;
+      }
+
+      final language = result.data['language']?.toString().toLowerCase();
+      if (language == 'hi') {
+        return 'hi';
+      }
+      if (language == 'en') {
+        return 'en';
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<ApiResponse> saveLanguagePreference(String languageCode) async {
+    final normalized = languageCode.trim().toLowerCase();
+    if (normalized != 'en' && normalized != 'hi') {
+      return const ApiResponse(success: false, message: 'Invalid language');
+    }
+
+    try {
+      final result = await _request(
+        'PUT',
+        '/api/user/language',
+        body: {'language': normalized},
+      );
+
+      if (result.statusCode == 200) {
+        return const ApiResponse(success: true, message: 'Language saved');
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to save language',
+      );
+    } catch (_) {
+      return const ApiResponse(
+        success: false,
+        message: 'Connection failed while saving language.',
+      );
+    }
+  }
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token') != null;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -56,6 +57,8 @@ class _CategoryModesScreenState extends State<CategoryModesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppBar(
@@ -80,9 +83,9 @@ class _CategoryModesScreenState extends State<CategoryModesScreen> {
               onRefresh: _refresh,
               color: AppColors.accentRed,
               child: _modes.isEmpty
-                  ? const Center(
+                      ? Center(
                       child: Text(
-                        'No modes available in this category.',
+                        tx('No modes available in this category.'),
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
                     )
@@ -112,6 +115,7 @@ class _CategoryModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
     final rewardText = mode.winPrize ??
         '${_currency(mode.perKill ?? 0)}/Kill  •  Pool ${_currency(mode.prizePool ?? 0)}';
 
@@ -202,7 +206,7 @@ class _CategoryModeCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          'Entry ${_currency(mode.entryFee)}',
+                          '${tx('Entry')} ${_currency(mode.entryFee)}',
                           style: const TextStyle(
                             color: AppColors.accentGreen,
                             fontWeight: FontWeight.w800,
@@ -233,7 +237,7 @@ class _CategoryModeCard extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: onTap,
-                      child: const Text('View Tournaments'),
+                      child: Text(tx('View Tournaments')),
                     ),
                   ),
                 ],

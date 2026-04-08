@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/app_localization.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -39,8 +40,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please agree to the Terms & Conditions'),
+        SnackBar(
+          content: Text(context.tx('Please agree to the Terms & Conditions')),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -94,6 +95,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -133,9 +136,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Create your account & start competing',
-                      style: TextStyle(
+                    Text(
+                      tx('Create your account & start competing'),
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
@@ -157,18 +160,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _fullNameController,
                       textInputAction: TextInputAction.next,
                       textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        hintText: 'Enter your full name',
-                        prefixIcon: Icon(Icons.badge_outlined,
+                      decoration: InputDecoration(
+                        labelText: tx('Full Name'),
+                        hintText: tx('Enter your full name'),
+                        prefixIcon: const Icon(Icons.badge_outlined,
                             color: AppColors.textMuted),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your full name';
+                          return tx('Please enter your full name');
                         }
                         if (value.trim().length < 2) {
-                          return 'Name must be at least 2 characters';
+                          return tx('Name must be at least 2 characters');
                         }
                         return null;
                       },
@@ -185,21 +188,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             RegExp(r'[a-zA-Z0-9_.]')),
                         LengthLimitingTextInputFormatter(20),
                       ],
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        hintText: 'Choose a unique username',
-                        prefixIcon: Icon(Icons.alternate_email,
+                      decoration: InputDecoration(
+                        labelText: tx('Username'),
+                        hintText: tx('Choose a unique username'),
+                        prefixIcon: const Icon(Icons.alternate_email,
                             color: AppColors.textMuted),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please choose a username';
+                          return tx('Please choose a username');
                         }
                         if (value.trim().length < 3) {
-                          return 'Username must be at least 3 characters';
+                          return tx('Username must be at least 3 characters');
                         }
                         if (!RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(value)) {
-                          return 'Only letters, numbers, dots and underscores';
+                          return tx('Only letters, numbers, dots and underscores');
                         }
                         return null;
                       },
@@ -215,19 +218,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       inputFormatters: [
                         FilteringTextInputFormatter.deny(RegExp(r'\s')),
                       ],
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Enter your email address',
-                        prefixIcon: Icon(Icons.email_outlined,
+                      decoration: InputDecoration(
+                        labelText: tx('Email'),
+                        hintText: tx('Enter your email address'),
+                        prefixIcon: const Icon(Icons.email_outlined,
                             color: AppColors.textMuted),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email';
+                          return tx('Please enter your email');
                         }
                         if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                             .hasMatch(value.trim())) {
-                          return 'Please enter a valid email';
+                          return tx('Please enter a valid email');
                         }
                         return null;
                       },
@@ -244,13 +247,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
                       ],
-                      decoration: const InputDecoration(
-                        labelText: 'Mobile Number',
-                        hintText: 'Enter 10-digit mobile number',
-                        prefixIcon: Icon(Icons.phone_android_outlined,
+                      decoration: InputDecoration(
+                        labelText: tx('Mobile Number'),
+                        hintText: tx('Enter 10-digit mobile number'),
+                        prefixIcon: const Icon(Icons.phone_android_outlined,
                             color: AppColors.textMuted),
                         prefixText: '+91  ',
-                        prefixStyle: TextStyle(
+                        prefixStyle: const TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
@@ -258,10 +261,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your mobile number';
+                          return tx('Please enter your mobile number');
                         }
                         if (value.trim().length != 10) {
-                          return 'Mobile number must be 10 digits';
+                          return tx('Mobile number must be 10 digits');
                         }
                         return null;
                       },
@@ -275,8 +278,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Create a strong password',
+                        labelText: tx('Password'),
+                        hintText: tx('Create a strong password'),
                         prefixIcon: const Icon(Icons.lock_outline,
                             color: AppColors.textMuted),
                         suffixIcon: IconButton(
@@ -294,16 +297,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please create a password';
+                          return tx('Please create a password');
                         }
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
+                          return tx('Password must be at least 8 characters');
                         }
                         if (!RegExp(r'(?=.*[A-Z])').hasMatch(value)) {
-                          return 'Include at least one uppercase letter';
+                          return tx('Include at least one uppercase letter');
                         }
                         if (!RegExp(r'(?=.*[0-9])').hasMatch(value)) {
-                          return 'Include at least one number';
+                          return tx('Include at least one number');
                         }
                         return null;
                       },
@@ -317,8 +320,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscureConfirm,
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        hintText: 'Re-enter your password',
+                        labelText: tx('Confirm Password'),
+                        hintText: tx('Re-enter your password'),
                         prefixIcon: const Icon(Icons.lock_outline,
                             color: AppColors.textMuted),
                         suffixIcon: IconButton(
@@ -336,10 +339,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
+                          return tx('Please confirm your password');
                         }
                         if (value != _passwordController.text) {
-                          return 'Passwords do not match';
+                          return tx('Passwords do not match');
                         }
                         return null;
                       },
@@ -372,24 +375,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               setState(() => _agreeTerms = !_agreeTerms);
                             },
                             child: RichText(
-                              text: const TextSpan(
-                                text: 'I agree to the ',
-                                style: TextStyle(
+                              text: TextSpan(
+                                text: tx('I agree to the '),
+                                style: const TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 13,
                                 ),
                                 children: [
                                   TextSpan(
-                                    text: 'Terms & Conditions',
-                                    style: TextStyle(
+                                    text: tx('Terms & Conditions'),
+                                    style: const TextStyle(
                                       color: AppColors.accentRed,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  TextSpan(text: ' and '),
+                                  TextSpan(text: tx(' and ')),
                                   TextSpan(
-                                    text: 'Privacy Policy',
-                                    style: TextStyle(
+                                    text: tx('Privacy Policy'),
+                                    style: const TextStyle(
                                       color: AppColors.accentRed,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -426,9 +429,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'Create Account',
-                                style: TextStyle(
+                            : Text(
+                                tx('Register'),
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -445,11 +448,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 children: [
                   Expanded(child: Divider(color: Colors.grey.shade300)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'OR',
-                      style: TextStyle(
+                      tx('OR'),
+                      style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -470,7 +473,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // TODO: Google sign up
                   },
                   icon: const Icon(Icons.g_mobiledata, size: 28),
-                  label: const Text('Sign up with Google'),
+                  label: Text(tx('Continue with Google')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
                     side: BorderSide(color: Colors.grey.shade300, width: 1.5),
@@ -487,9 +490,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Already have an account? ',
-                    style: TextStyle(
+                  Text(
+                    tx('Already have an account? '),
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
@@ -498,9 +501,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onTap: () {
                       Navigator.pushReplacementNamed(context, '/login');
                     },
-                    child: const Text(
-                      'Log In',
-                      style: TextStyle(
+                    child: Text(
+                      tx('Log In'),
+                      style: const TextStyle(
                         color: AppColors.accentRed,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,

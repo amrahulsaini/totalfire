@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -80,16 +81,17 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
     final mode = _mode;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(mode?.title ?? 'Mode Details'),
+        title: Text(mode?.title ?? tx('Mode Details')),
       ),
       body: _isLoading
           ? const Center(child: ThreeDotsLoader())
           : mode == null
-              ? const Center(child: Text('Mode details unavailable'))
+              ? Center(child: Text(tx('Mode details unavailable')))
               : RefreshIndicator(
                   onRefresh: _loadMode,
                   child: ListView(
@@ -98,7 +100,7 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
                       _HeroImage(imagePath: mode.appImage, title: mode.title),
                       const SizedBox(height: 20),
                       _SectionCard(
-                        title: 'Overview',
+                        title: tx('Overview'),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -109,7 +111,7 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
                                 _InfoPill(icon: Icons.people_alt_outlined, label: mode.players),
                                 _InfoPill(
                                   icon: Icons.currency_rupee,
-                                  label: 'Entry ${_currency(mode.entryFee)}',
+                                  label: '${tx('Entry')} ${_currency(mode.entryFee)}',
                                 ),
                                 _InfoPill(
                                   icon: Icons.emoji_events_outlined,
@@ -130,7 +132,7 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                       _SectionCard(
-                        title: 'Rules',
+                        title: tx('Rules'),
                         child: Column(
                           children: mode.rules
                               .map(
@@ -166,7 +168,7 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                       _SectionCard(
-                        title: 'Reward Breakdown',
+                        title: tx('Reward Breakdown'),
                         child: Column(
                           children: mode.rewardBreakdown
                               .map(
@@ -198,11 +200,11 @@ class _ModeDetailScreenState extends State<ModeDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                       _SectionCard(
-                        title: 'Upcoming Matches',
+                        title: tx('Upcoming Matches'),
                         child: _tournaments.isEmpty
-                            ? const Text(
-                                'No upcoming match has been created for this mode yet. Ask admin to open a tournament slot.',
-                                style: TextStyle(color: AppColors.textSecondary, height: 1.6),
+                            ? Text(
+                                tx('No upcoming match has been created for this mode yet. Ask admin to open a tournament slot.'),
+                                style: const TextStyle(color: AppColors.textSecondary, height: 1.6),
                               )
                             : Column(
                                 children: _tournaments

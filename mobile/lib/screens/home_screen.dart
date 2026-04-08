@@ -1,10 +1,14 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
+import '../services/language_service.dart';
 import '../services/push_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_utils.dart';
@@ -95,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
 
       unawaited(PushService.syncTokenWithBackend());
+      unawaited(LanguageService.syncWithCloudIfLoggedIn());
     } catch (error) {
       if (error is ApiException && error.statusCode == 401) {
         await _forceLogout(message: error.message);
@@ -388,8 +393,72 @@ class _HomeScreenState extends State<HomeScreen> {
     await _refreshNotificationsCount();
   }
 
+  Future<void> _openSupportUrl(String url) async {
+    final uri = Uri.parse(url);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      _showMessage(context.tx('Support channels could not be opened.'), isError: true);
+    }
+  }
+
+  Future<void> _openLanguageSettings() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) {
+        final tx = sheetContext.tx;
+        final current = LanguageService.currentLanguageCode;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tx('Language'),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                RadioListTile<String>(
+                  value: 'en',
+                  groupValue: current,
+                  title: Text(tx('English')),
+                  onChanged: (value) => Navigator.pop(sheetContext, value),
+                ),
+                RadioListTile<String>(
+                  value: 'hi',
+                  groupValue: current,
+                  title: Text(tx('Hindi')),
+                  onChanged: (value) => Navigator.pop(sheetContext, value),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    await LanguageService.setLanguage(selected, syncCloud: true);
+    if (!mounted) {
+      return;
+    }
+    _showMessage(context.tx('Language updated'));
+  }
+
   Future<void> _openCategory(String category) async {
-    final label = _categoryLabel(category);
+    final label = _categoryLabel(context, category);
     final modes = _modes.where((m) => m.category == category).toList();
     await Navigator.push(
       context,
@@ -440,6 +509,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: ThreeDotsLoader()),
@@ -471,26 +542,26 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.accentRed,
         unselectedItemColor: AppColors.textMuted,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.sports_esports_outlined),
-            activeIcon: Icon(Icons.sports_esports),
-            label: 'Modes',
+            icon: const Icon(Icons.sports_esports_outlined),
+            activeIcon: const Icon(Icons.sports_esports),
+            label: tx('Modes'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'My Matches',
+            icon: const Icon(Icons.calendar_month_outlined),
+            activeIcon: const Icon(Icons.calendar_month),
+            label: tx('My Matches'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            activeIcon: Icon(Icons.account_balance_wallet),
-            label: 'Wallet',
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            activeIcon: const Icon(Icons.account_balance_wallet),
+            label: tx('Wallet'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outline),
+            activeIcon: const Icon(Icons.person),
+            label: tx('Profile'),
           ),
         ],
       ),
@@ -498,6 +569,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildModesTab(UserProfile user) {
+    final tx = context.tx;
+
     return RefreshIndicator(
       onRefresh: _refreshModesData,
       color: AppColors.accentRed,
@@ -515,8 +588,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => setState(() => _currentIndex = 2),
           ),
           const SizedBox(height: 28),
-          const Text(
-            'Select Game Mode',
+          Text(
+            tx('Modes'),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 22,
@@ -570,13 +643,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMyMatchesTab() {
+    final tx = context.tx;
+
     return RefreshIndicator(
       onRefresh: _refreshMyMatches,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
-          const Text(
-            'My Tournaments',
+          Text(
+            tx('My Tournaments'),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 24,
@@ -592,19 +667,19 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               _StatusFilterChip(
-                label: 'Upcoming',
+                label: tx('Upcoming'),
                 selected: _selectedMyStatus == 'upcoming',
                 onTap: () => setState(() => _selectedMyStatus = 'upcoming'),
               ),
               const SizedBox(width: 8),
               _StatusFilterChip(
-                label: 'Active',
+                label: tx('Active'),
                 selected: _selectedMyStatus == 'active',
                 onTap: () => setState(() => _selectedMyStatus = 'active'),
               ),
               const SizedBox(width: 8),
               _StatusFilterChip(
-                label: 'Completed',
+                label: tx('Completed'),
                 selected: _selectedMyStatus == 'completed',
                 onTap: () => setState(() => _selectedMyStatus = 'completed'),
               ),
@@ -612,9 +687,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           if (_filteredMyTournaments.isEmpty)
-            const _EmptyCard(
-              title: 'No matches in this state',
-              subtitle: 'Join a tournament from the Modes tab and it will appear here.',
+            _EmptyCard(
+              title: tx('No matches in this state'),
+              subtitle: tx('Join a tournament from the Modes tab and it will appear here.'),
             )
           else
             ..._filteredMyTournaments.map(
@@ -632,13 +707,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildWalletTab() {
+    final tx = context.tx;
+
     return RefreshIndicator(
       onRefresh: _refreshWalletData,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
-          const Text(
-            'Wallet',
+          Text(
+            tx('Wallet'),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 24,
@@ -669,8 +746,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Wallet Actions',
+                Text(
+                  tx('Wallet Actions'),
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 18,
@@ -683,8 +760,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Add Money',
+                Text(
+                  tx('Add Money'),
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 16,
@@ -714,7 +791,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Pay With Razorpay'),
+                        : Text(tx('Pay With Razorpay')),
                   ),
                 ),
                 if (_pendingWalletOrderId != null && _pendingWalletOrderId!.isNotEmpty) ...[
@@ -741,15 +818,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _isWalletBusy ? null : _handleVerifyPendingPayment,
                       icon: const Icon(Icons.verified),
-                      label: const Text('Verify Payment'),
+                      label: Text(tx('Verify Payment')),
                     ),
                   ),
                 ],
                 const SizedBox(height: 20),
                 const Divider(height: 1),
                 const SizedBox(height: 20),
-                const Text(
-                  'Withdraw Money',
+                Text(
+                  tx('Withdraw Money'),
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 16,
@@ -771,7 +848,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _isWalletBusy ? null : _handleWithdrawMoney,
                     icon: const Icon(Icons.south_west_rounded),
-                    label: const Text('Request Withdrawal'),
+                    label: Text(tx('Request Withdrawal')),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -780,7 +857,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _openPaymentsScreen,
                     icon: const Icon(Icons.payments_outlined),
-                    label: const Text('Open Payments & Requests'),
+                    label: Text(tx('Open Payments & Requests')),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -805,8 +882,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Recent Transactions',
+          Text(
+            tx('Recent Transactions'),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -815,9 +892,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 12),
           if (_transactions.isEmpty)
-            const _EmptyCard(
-              title: 'No wallet activity yet',
-              subtitle: 'Credits, debits, entry fees, and match rewards will appear here.',
+            _EmptyCard(
+              title: tx('No wallet activity yet'),
+              subtitle: tx('Credits, debits, entry fees, and match rewards will appear here.'),
             )
           else
             ..._transactions.map(
@@ -832,6 +909,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProfileTab(UserProfile user) {
+    final tx = context.tx;
     final completed = _myTournaments.where((item) => item.status == 'completed').length;
     final active = _myTournaments.where((item) => item.status == 'active').length;
 
@@ -889,16 +967,16 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _ProfileStat(label: 'Matches', value: _myTournaments.length.toString()),
-              _ProfileStat(label: 'Active', value: active.toString()),
-              _ProfileStat(label: 'Completed', value: completed.toString()),
+              _ProfileStat(label: tx('My Matches'), value: _myTournaments.length.toString()),
+              _ProfileStat(label: tx('Active'), value: active.toString()),
+              _ProfileStat(label: tx('Completed'), value: completed.toString()),
             ],
           ),
         ),
         const SizedBox(height: 20),
         _ProfileActionTile(
           icon: Icons.calendar_month_outlined,
-          title: 'My Upcoming Matches',
+          title: tx('My Upcoming Matches'),
           onTap: () => setState(() {
             _selectedMyStatus = 'upcoming';
             _currentIndex = 1;
@@ -906,29 +984,39 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         _ProfileActionTile(
           icon: Icons.account_balance_wallet_outlined,
-          title: 'Wallet History',
+          title: tx('Wallet History'),
           onTap: () => setState(() => _currentIndex = 2),
         ),
         _ProfileActionTile(
+          icon: Icons.language,
+          title: tx('Language'),
+          onTap: _openLanguageSettings,
+        ),
+        _ProfileActionTile(
           icon: Icons.payments_outlined,
-          title: 'Payments & Withdrawals',
+          title: tx('Payments & Withdrawals'),
           onTap: _openPaymentsScreen,
         ),
         _ProfileActionTile(
           icon: Icons.notifications_active_outlined,
-          title: 'Notifications',
+          title: tx('Notifications'),
           onTap: _openNotificationsScreen,
         ),
         _ProfileActionTile(
           icon: Icons.sports_esports_outlined,
-          title: 'Browse Modes',
+          title: tx('Browse Modes'),
           onTap: () => setState(() => _currentIndex = 0),
+        ),
+        const SizedBox(height: 4),
+        _SupportContactCard(
+          onOpenWhatsApp: () => _openSupportUrl('https://wa.me/917878159565'),
+          onOpenTelegram: () => _openSupportUrl('https://t.me/total_fire'),
         ),
         const SizedBox(height: 18),
         OutlinedButton.icon(
           onPressed: _forceLogout,
           icon: const Icon(Icons.logout_rounded),
-          label: const Text('Logout'),
+          label: Text(tx('Logout')),
         ),
       ],
     );
@@ -973,7 +1061,7 @@ class _TopHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Total Fire',
+                context.tx('Total Fire'),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
@@ -984,7 +1072,7 @@ class _TopHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                'Welcome back, $firstName',
+                '${context.tx('Welcome back')}, $firstName',
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
             ],
@@ -1060,8 +1148,8 @@ class _WalletHeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Wallet Balance',
+                Text(
+                  context.tx('Wallet Balance'),
                   style: TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 8),
@@ -1082,7 +1170,7 @@ class _WalletHeroCard extends StatelessWidget {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
-                    child: const Text('Open Wallet'),
+                    child: Text(context.tx('Wallet')),
                   ),
                 ],
               ],
@@ -1496,6 +1584,108 @@ class _ProfileActionTile extends StatelessWidget {
   }
 }
 
+class _SupportContactCard extends StatelessWidget {
+  const _SupportContactCard({
+    required this.onOpenWhatsApp,
+    required this.onOpenTelegram,
+  });
+
+  final VoidCallback onOpenWhatsApp;
+  final VoidCallback onOpenTelegram;
+
+  @override
+  Widget build(BuildContext context) {
+    final tx = context.tx;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF3E8), Color(0xFFFFE9DC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFDBA74)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.support_agent, color: Color(0xFFC2410C)),
+              const SizedBox(width: 8),
+              Text(
+                tx('Contact Support'),
+                style: const TextStyle(
+                  color: Color(0xFF9A3412),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            tx('Need help with payments, rooms, slots, or account issues? Reach us directly:'),
+            style: const TextStyle(
+              color: Color(0xFF9A3412),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            tx('WhatsApp: 7878159565'),
+            style: const TextStyle(
+              color: Color(0xFF14532D),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            tx('Telegram: @total_fire'),
+            style: const TextStyle(
+              color: Color(0xFF1E40AF),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onOpenWhatsApp,
+                  icon: const Icon(Icons.chat),
+                  label: Text(tx('Open WhatsApp')),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onOpenTelegram,
+                  icon: const Icon(Icons.send_rounded),
+                  label: Text(tx('Open Telegram')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1D4ED8),
+                    side: const BorderSide(color: Color(0xFF93C5FD)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusFilterChip extends StatelessWidget {
   const _StatusFilterChip({
     required this.label,
@@ -1644,16 +1834,18 @@ String _currency(double value) {
   return '₹${value.toStringAsFixed(2)}';
 }
 
-String _categoryLabel(String category) {
+String _categoryLabel(BuildContext context, String category) {
+  final tx = context.tx;
+
   switch (category) {
     case 'br':
-      return 'Battle Royale';
+      return tx('Battle Royale');
     case 'cs':
-      return 'Clash Squad';
+      return tx('Clash Squad');
     case 'lw':
-      return 'Lone Wolf';
+      return tx('Lone Wolf');
     default:
-      return 'Mode';
+      return tx('Mode');
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/app_localization.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -52,6 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -91,9 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Welcome back, warrior',
-                      style: TextStyle(
+                    Text(
+                      tx('Welcome back, warrior'),
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 15,
                       ),
@@ -118,15 +121,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       inputFormatters: [
                         FilteringTextInputFormatter.deny(RegExp(r'\s')),
                       ],
-                      decoration: const InputDecoration(
-                        labelText: 'Email or Username',
-                        hintText: 'Enter your email or username',
-                        prefixIcon: Icon(Icons.person_outline,
+                      decoration: InputDecoration(
+                        labelText: tx('Email or Username'),
+                        hintText: tx('Enter your email or username'),
+                        prefixIcon: const Icon(Icons.person_outline,
                             color: AppColors.textMuted),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email or username';
+                          return tx('Please enter your email or username');
                         }
                         return null;
                       },
@@ -140,8 +143,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
+                        labelText: tx('Password'),
+                        hintText: tx('Enter your password'),
                         prefixIcon: const Icon(Icons.lock_outline,
                             color: AppColors.textMuted),
                         suffixIcon: IconButton(
@@ -159,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return tx('Please enter your password');
                         }
                         return null;
                       },
@@ -174,9 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           // TODO: Navigate to forgot password
                         },
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
+                        child: Text(
+                          tx('Forgot Password?'),
+                          style: const TextStyle(
                             color: AppColors.accentRed,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
@@ -209,9 +212,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'Log In',
-                                style: TextStyle(
+                            : Text(
+                                tx('Log In'),
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -228,11 +231,11 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 children: [
                   Expanded(child: Divider(color: Colors.grey.shade300)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'OR',
-                      style: TextStyle(
+                      tx('OR'),
+                      style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -253,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // TODO: Google sign in
                   },
                   icon: const Icon(Icons.g_mobiledata, size: 28),
-                  label: const Text('Continue with Google'),
+                  label: Text(tx('Continue with Google')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
                     side: BorderSide(color: Colors.grey.shade300, width: 1.5),
@@ -270,9 +273,9 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Don't have an account? ",
-                    style: TextStyle(
+                  Text(
+                    tx("Don't have an account? "),
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
@@ -281,9 +284,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () {
                       Navigator.pushReplacementNamed(context, '/register');
                     },
-                    child: const Text(
-                      'Sign Up',
-                      style: TextStyle(
+                    child: Text(
+                      tx('Sign Up'),
+                      style: const TextStyle(
                         color: AppColors.accentRed,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,

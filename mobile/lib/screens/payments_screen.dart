@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -56,15 +57,17 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Payments & Withdrawals'),
-          bottom: const TabBar(
+          title: Text(tx('Payments & Withdrawals')),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Transactions'),
-              Tab(text: 'Withdrawals'),
+              Tab(text: tx('Transactions')),
+              Tab(text: tx('Withdrawals')),
             ],
           ),
         ),
@@ -87,9 +90,9 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Current Wallet Balance',
-                          style: TextStyle(color: Colors.white70),
+                        Text(
+                          tx('Current Wallet Balance'),
+                          style: const TextStyle(color: Colors.white70),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -111,11 +114,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                           child: _transactions.isEmpty
                               ? ListView(
                                   padding: const EdgeInsets.all(18),
-                                  children: const [
-                                    SizedBox(height: 40),
+                                  children: [
+                                    const SizedBox(height: 40),
                                     _EmptyState(
-                                      title: 'No transactions yet',
-                                      subtitle: 'Top-ups, entry fees, rewards, and withdrawals will appear here.',
+                                      title: tx('No transactions yet'),
+                                      subtitle: tx('Top-ups, entry fees, rewards, and withdrawals will appear here.'),
                                     ),
                                   ],
                                 )
@@ -132,11 +135,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                           child: _withdrawals.isEmpty
                               ? ListView(
                                   padding: const EdgeInsets.all(18),
-                                  children: const [
-                                    SizedBox(height: 40),
+                                  children: [
+                                    const SizedBox(height: 40),
                                     _EmptyState(
-                                      title: 'No withdrawal requests yet',
-                                      subtitle: 'When you request a withdrawal, status updates will appear here.',
+                                      title: tx('No withdrawal requests yet'),
+                                      subtitle: tx('When you request a withdrawal, status updates will appear here.'),
                                     ),
                                   ],
                                 )

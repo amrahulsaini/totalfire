@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -128,14 +129,15 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
     final detail = _detail;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Match Details')),
+      appBar: AppBar(title: Text(tx('Match Details'))),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : detail == null
-              ? const Center(child: Text('Tournament unavailable'))
+              ? Center(child: Text(tx('Tournament unavailable')))
               : RefreshIndicator(
                   onRefresh: _loadDetail,
                   child: ListView(
@@ -145,7 +147,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                       const SizedBox(height: 16),
                       if (detail.userEntry != null) ...[
                         _SectionCard(
-                          title: 'Your Slot',
+                          title: tx('Your Slot'),
                           child: Row(
                             children: [
                               _SlotBadge(label: 'Slot #${detail.userEntry!.slotNumber}'),
@@ -161,25 +163,25 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                         const SizedBox(height: 16),
                       ],
                       _SectionCard(
-                        title: 'Room Access',
+                        title: tx('Room Access'),
                         action: IconButton(
                           icon: const Icon(Icons.refresh, size: 20),
                           color: AppColors.textSecondary,
-                          tooltip: 'Refresh',
+                          tooltip: tx('Refresh'),
                           onPressed: _loadDetail,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
                         child: detail.tournament.roomId == null
-                            ? const Text(
-                                'Room ID and password unlock 5 minutes before match start.',
-                                style: TextStyle(color: AppColors.textSecondary, height: 1.6),
+                            ? Text(
+                              tx('Room ID and password unlock 5 minutes before match start.'),
+                              style: const TextStyle(color: AppColors.textSecondary, height: 1.6),
                               )
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _RoomLine(
-                                    label: 'Room ID',
+                                    label: tx('Room ID'),
                                     value: detail.tournament.roomId ?? '-',
                                   ),
                                   const SizedBox(height: 10),
@@ -232,11 +234,11 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                         const SizedBox(height: 16),
                       ],
                       _SectionCard(
-                        title: 'Joined Players',
+                        title: tx('Joined Players'),
                         child: detail.entries.isEmpty
-                            ? const Text(
-                                'No players have joined this match yet.',
-                                style: TextStyle(color: AppColors.textSecondary),
+                            ? Text(
+                                tx('No players have joined this match yet.'),
+                                style: const TextStyle(color: AppColors.textSecondary),
                               )
                             : Column(
                                 children: detail.entries
@@ -252,7 +254,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                       if (detail.results.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         _SectionCard(
-                          title: 'Results & Rewards',
+                          title: tx('Results & Rewards'),
                           child: Builder(
                             builder: (ctx) {
                               // Sort: by position asc; for same position put opponent first

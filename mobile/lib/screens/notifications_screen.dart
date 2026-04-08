@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -74,19 +75,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _deleteAll() async {
+    final tx = context.tx;
+
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete all notifications?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(tx('Delete all notifications?')),
+        content: Text(tx('This action cannot be undone.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(tx('Cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete All'),
+            child: Text(tx('Delete All')),
           ),
         ],
       ),
@@ -126,17 +129,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     setState(() {
       _items = _items
-          .map((entry) => entry.id == item.id
-              ? AppNotificationItem(
-                  id: entry.id,
-                  type: entry.type,
-                  title: entry.title,
-                  message: entry.message,
-                  isRead: true,
-                  createdAt: entry.createdAt,
-                  payload: entry.payload,
-                )
-              : entry)
+          .map(
+            (entry) => entry.id == item.id
+                ? AppNotificationItem(
+                    id: entry.id,
+                    type: entry.type,
+                    title: entry.title,
+                    message: entry.message,
+                    isRead: true,
+                    createdAt: entry.createdAt,
+                    payload: entry.payload,
+                  )
+                : entry,
+          )
           .toList();
     });
   }
@@ -168,17 +173,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(tx('Notifications')),
         actions: [
           IconButton(
-            tooltip: 'Mark all read',
+            tooltip: tx('Mark all read'),
             onPressed: _isBusy || _items.isEmpty ? null : _markAllRead,
             icon: const Icon(Icons.done_all),
           ),
           IconButton(
-            tooltip: 'Delete all',
+            tooltip: tx('Delete all'),
             onPressed: _isBusy || _items.isEmpty ? null : _deleteAll,
             icon: const Icon(Icons.delete_sweep_outlined),
           ),
@@ -320,29 +327,31 @@ class _EmptyNotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tx = context.tx;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.notifications_none_rounded, size: 40, color: AppColors.textMuted),
-          SizedBox(height: 10),
+          const Icon(Icons.notifications_none_rounded, size: 40, color: AppColors.textMuted),
+          const SizedBox(height: 10),
           Text(
-            'No notifications yet',
-            style: TextStyle(
+            tx('No notifications yet'),
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            'Wallet updates, withdrawal actions, and tournament events will appear here.',
+            tx('Wallet updates, withdrawal actions, and tournament events will appear here.'),
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
         ],
       ),
@@ -372,6 +381,6 @@ IconData _typeIcon(String type) {
     case 'tournament':
       return Icons.emoji_events_outlined;
     default:
-      return Icons.notifications_none_rounded;
+      return Icons.info_outline_rounded;
   }
 }
