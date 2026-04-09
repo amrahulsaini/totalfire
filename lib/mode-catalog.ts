@@ -1,10 +1,6 @@
 import pool from "@/lib/db";
-import {
-  allModes,
-  type ModeConfig,
-  type RewardBreakdownItem,
-} from "@/lib/modes";
-import type { ResultSetHeader, RowDataPacket } from "mysql2";
+import type { ModeConfig, RewardBreakdownItem } from "@/lib/modes";
+import type { RowDataPacket } from "mysql2";
 
 type ModeRow = RowDataPacket & {
   id: number;
@@ -62,93 +58,21 @@ function mapModeRow(row: ModeRow): ModeConfig {
   };
 }
 
-async function syncModeCatalog() {
-  for (const [index, mode] of allModes.entries()) {
-    await pool.query<ResultSetHeader>(
-      `INSERT INTO modes (
-        id,
-        title,
-        slug,
-        image,
-        app_image,
-        category,
-        players_label,
-        max_players,
-        team_size,
-        entry_fee,
-        per_kill,
-        prize_pool,
-        win_prize,
-        full_description,
-        rules_json,
-        reward_breakdown_json,
-        sort_order,
-        is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-      ON DUPLICATE KEY UPDATE
-        title = VALUES(title),
-        image = VALUES(image),
-        app_image = VALUES(app_image),
-        category = VALUES(category),
-        players_label = VALUES(players_label),
-        max_players = VALUES(max_players),
-        team_size = VALUES(team_size),
-        entry_fee = VALUES(entry_fee),
-        per_kill = VALUES(per_kill),
-        prize_pool = VALUES(prize_pool),
-        win_prize = VALUES(win_prize),
-        full_description = VALUES(full_description),
-        rules_json = VALUES(rules_json),
-        reward_breakdown_json = VALUES(reward_breakdown_json),
-        sort_order = VALUES(sort_order),
-        is_active = VALUES(is_active)`,
-      [
-        mode.id,
-        mode.title,
-        mode.slug,
-        mode.image,
-        mode.appImage,
-        mode.category,
-        mode.players,
-        mode.maxPlayers,
-        mode.teamSize,
-        mode.entryFee,
-        mode.perKill ?? null,
-        mode.prizePool ?? null,
-        mode.winPrize ?? null,
-        mode.fullDescription,
-        JSON.stringify(mode.rules),
-        JSON.stringify(mode.rewardBreakdown),
-        index + 1,
-      ]
-    );
-  }
-}
-
 export async function getModeCatalog() {
   try {
-    await syncModeCatalog();
-
     const [rows] = await pool.query<ModeRow[]>(
       `SELECT * FROM modes
        WHERE is_active = 1
        ORDER BY sort_order ASC, id ASC`
     );
-
-    if (rows.length > 0) {
-      return rows.map(mapModeRow);
-    }
+    return rows.map(mapModeRow);
   } catch {
-    return allModes;
+    return [];
   }
-
-  return allModes;
 }
 
 export async function getModeCatalogBySlug(slug: string) {
   try {
-    await syncModeCatalog();
-
     const [rows] = await pool.query<ModeRow[]>(
       `SELECT * FROM modes
        WHERE slug = ? AND is_active = 1
@@ -156,12 +80,11 @@ export async function getModeCatalogBySlug(slug: string) {
       [slug]
     );
 
-    if (rows.length > 0) {
-      return mapModeRow(rows[0]);
+    if (rows.length === 0) {
+      return null;
     }
+    return mapModeRow(rows[0]);
   } catch {
-    return allModes.find((mode) => mode.slug === slug) ?? null;
+    return null;
   }
-
-  return allModes.find((mode) => mode.slug === slug) ?? null;
 }
