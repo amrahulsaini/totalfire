@@ -21,16 +21,56 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json().catch(() => ({}));
+  const target = String(payload.target ?? "tournament").trim().toLowerCase();
   const tournamentId = Number(payload.tournamentId);
   const title = String(payload.title ?? "").trim().slice(0, 120);
   const message = String(payload.message ?? "").trim().slice(0, 500);
   const type = normalizeType(payload.type);
 
-  if (!tournamentId || tournamentId <= 0) {
-    return NextResponse.json({ error: "Valid tournamentId is required" }, { status: 400 });
-  }
   if (!title || !message) {
     return NextResponse.json({ error: "Title and message are required" }, { status: 400 });
+  }
+
+  const isBroadcast = target === "all";
+
+  if (!isBroadcast && (!tournamentId || tournamentId <= 0)) {
+    return NextResponse.json({ error: "Valid tournamentId is required" }, { status: 400 });
+  }
+
+  if (isBroadcast) {
+    const [userRows] = await pool.query<RowDataPacket[]>(
+      `SELECT id
+       FROM users
+       WHERE role = 'user'`
+    );
+
+    if (userRows.length === 0) {
+      return NextResponse.json(
+        { error: "No users found to notify" },
+        { status: 400 }
+      );
+    }
+
+    await Promise.allSettled(
+      userRows.map((row) =>
+        createUserNotification({
+          userId: Number(row.id),
+          type,
+          title,
+          message,
+          payload: {
+            target: "all",
+            sentByAdminId: Number(admin.id),
+          },
+        })
+      )
+    );
+
+    return NextResponse.json({
+      success: true,
+      recipients: userRows.length,
+      target: "all",
+    });
   }
 
   const [tournamentRows] = await pool.query<RowDataPacket[]>(
@@ -82,5 +122,6 @@ export async function POST(request: Request) {
     success: true,
     recipients: userRows.length,
     tournamentId,
+    target: "tournament",
   });
 }

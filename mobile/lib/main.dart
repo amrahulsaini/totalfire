@@ -12,6 +12,7 @@ import 'services/push_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/language_selection_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'screens/register_screen.dart';
 import 'widgets/three_dots_loader.dart';
 
@@ -61,6 +62,7 @@ class TotalFireApp extends StatelessWidget {
           home: const _AuthGate(),
           routes: {
             '/login': (context) => const LoginScreen(),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
             '/register': (context) => const RegisterScreen(),
             '/home': (context) => const HomeScreen(),
           },

@@ -25,6 +25,7 @@ export default function AdminTournamentNotificationsPage() {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
   const [form, setForm] = useState({
+    target: "tournament" as "tournament" | "all",
     tournamentId: "",
     title: "",
     message: "",
@@ -84,8 +85,13 @@ export default function AdminTournamentNotificationsPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.tournamentId || !form.title.trim() || !form.message.trim()) {
-      setBanner({ type: "error", text: "Tournament, title, and message are required" });
+    if (!form.title.trim() || !form.message.trim()) {
+      setBanner({ type: "error", text: "Title and message are required" });
+      return;
+    }
+
+    if (form.target === "tournament" && !form.tournamentId) {
+      setBanner({ type: "error", text: "Select a tournament or switch target to all users" });
       return;
     }
 
@@ -100,6 +106,7 @@ export default function AdminTournamentNotificationsPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          target: form.target,
           tournamentId: Number(form.tournamentId),
           title: form.title.trim(),
           message: form.message.trim(),
@@ -115,7 +122,10 @@ export default function AdminTournamentNotificationsPage() {
 
       setBanner({
         type: "success",
-        text: `Notification sent to ${Number(data.recipients ?? 0)} joined users.`,
+        text:
+          form.target === "all"
+            ? `Notification sent to ${Number(data.recipients ?? 0)} users.`
+            : `Notification sent to ${Number(data.recipients ?? 0)} joined users.`,
       });
       setForm((current) => ({
         ...current,
@@ -178,11 +188,31 @@ export default function AdminTournamentNotificationsPage() {
             <form className="grid gap-4" onSubmit={handleSubmit}>
               <label>
                 <span className="mb-2 block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Send To
+                </span>
+                <select
+                  className="admin-input"
+                  value={form.target}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      target: event.target.value as "tournament" | "all",
+                    }))
+                  }
+                >
+                  <option value="tournament">Joined users of selected tournament</option>
+                  <option value="all">All registered users</option>
+                </select>
+              </label>
+
+              <label>
+                <span className="mb-2 block text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                   Tournament
                 </span>
                 <select
                   className="admin-input"
                   value={form.tournamentId}
+                  disabled={form.target === "all"}
                   onChange={(event) => setForm((current) => ({ ...current, tournamentId: event.target.value }))}
                 >
                   <option value="">Select a tournament</option>
@@ -192,6 +222,11 @@ export default function AdminTournamentNotificationsPage() {
                     </option>
                   ))}
                 </select>
+                {form.target === "all" ? (
+                  <p className="mt-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+                    Tournament selection is not required in broadcast mode.
+                  </p>
+                ) : null}
               </label>
 
               <label>

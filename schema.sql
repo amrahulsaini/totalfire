@@ -148,6 +148,23 @@ CREATE TABLE IF NOT EXISTS user_app_settings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Password reset OTP sessions
+CREATE TABLE IF NOT EXISTS password_reset_otps (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  otp_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  verified_at DATETIME DEFAULT NULL,
+  used_at DATETIME DEFAULT NULL,
+  attempts INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_password_reset_user_created (user_id, created_at),
+  INDEX idx_password_reset_expiry (expires_at),
+  INDEX idx_password_reset_used (user_id, used_at)
+);
+
 -- Create trigger to auto-create wallet for new users
 DROP TRIGGER IF EXISTS after_user_insert;
 DELIMITER //

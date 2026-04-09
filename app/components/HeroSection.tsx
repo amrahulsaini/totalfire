@@ -14,13 +14,15 @@ interface AppStats {
   activeWindowDays: number;
 }
 
+const MIN_ACTIVE_USERS = 3000;
+const MIN_DOWNLOADS = 10000;
+
 export default function HeroSection({ basePath = "" }: HeroSectionProps) {
   const [stats, setStats] = useState<AppStats>({
-    activeUsers: 0,
-    downloads: 0,
+    activeUsers: MIN_ACTIVE_USERS,
+    downloads: MIN_DOWNLOADS,
     activeWindowDays: 30,
   });
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   const portalHref = (path: string) => {
     if (!basePath) {
@@ -53,15 +55,7 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
         }
       } catch {
         if (!cancelled) {
-          setStats((prev) => ({
-            ...prev,
-            activeUsers: 0,
-            downloads: 0,
-          }));
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingStats(false);
+          setStats((prev) => prev);
         }
       }
     };
@@ -72,6 +66,9 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
       cancelled = true;
     };
   }, []);
+
+  const activeUsersDisplay = `${formatCount(Math.max(stats.activeUsers, MIN_ACTIVE_USERS))}+`;
+  const downloadsDisplay = `${formatCount(Math.max(stats.downloads, MIN_DOWNLOADS))}+`;
 
   return (
     <section className="hero-bg relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
@@ -133,7 +130,7 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
           <div className="animate-fade-in-up stagger-5 mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-12">
             <div className="stat-item">
               <div className="stat-number fire-text">
-                {isLoadingStats ? "..." : formatCount(stats.activeUsers)}
+                {activeUsersDisplay}
               </div>
               <div className="stat-label">Active Users</div>
               <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
@@ -142,7 +139,7 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
             </div>
             <div className="stat-item">
               <div className="stat-number blue-text">
-                {isLoadingStats ? "..." : formatCount(stats.downloads)}
+                {downloadsDisplay}
               </div>
               <div className="stat-label">App Downloads</div>
               <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>

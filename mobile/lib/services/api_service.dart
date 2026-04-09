@@ -210,6 +210,108 @@ class ApiService {
     }
   }
 
+  static Future<ApiResponse> requestPasswordResetOtp({
+    required String username,
+  }) async {
+    try {
+      final result = await _request(
+        'POST',
+        '/api/auth/forgot-password/request',
+        body: {
+          'username': username,
+        },
+        authorized: false,
+      );
+
+      if (result.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: result.data['message']?.toString() ?? 'OTP sent successfully',
+          data: result.data,
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Failed to send OTP',
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: e is ApiException ? e.message : 'Server error: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> verifyPasswordResetOtp({
+    required String username,
+    required String otp,
+  }) async {
+    try {
+      final result = await _request(
+        'POST',
+        '/api/auth/forgot-password/verify',
+        body: {
+          'username': username,
+          'otp': otp,
+        },
+        authorized: false,
+      );
+
+      if (result.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: result.data['message']?.toString() ?? 'OTP verified',
+          data: result.data,
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'OTP verification failed',
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: e is ApiException ? e.message : 'Server error: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> resetPasswordWithOtp({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    try {
+      final result = await _request(
+        'POST',
+        '/api/auth/forgot-password/reset',
+        body: {
+          'resetToken': resetToken,
+          'newPassword': newPassword,
+        },
+        authorized: false,
+      );
+
+      if (result.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: result.data['message']?.toString() ?? 'Password updated successfully',
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: result.data['error']?.toString() ?? 'Password reset failed',
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: e is ApiException ? e.message : 'Server error: $e',
+      );
+    }
+  }
+
   static Future<List<ModeCatalogItem>> getModes() async {
     final result = await _request('GET', '/api/modes');
     if (result.statusCode != 200) {
