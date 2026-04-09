@@ -26,11 +26,11 @@ const storeBody = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "TotalFire Store",
+    default: "TotalFire",
     template: "%s | TotalFire",
   },
   description:
-    "TotalFire.in ecommerce storefront for gaming gear, merch, and digital products. Tournament portal available at /main.",
+    "TotalFire esports portal with tournaments, rewards, and secure payments. Legacy ecommerce pages are available under /backup-old-ecommerce.",
   icons: {
     icon: "/totalfire-icon.ico",
     shortcut: "/totalfire-icon.ico",

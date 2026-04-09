@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #000000;
-  --bg-secondary: #111111;
-  --bg-card: #0a0a0a;
-  --bg-card-hover: #1f1f1f;
+  --bg-primary: #f7f1e8;
+  --bg-secondary: #fff8ee;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fff6e9;
   --accent-primary: #f97316; /* orange-500 */
   --accent-secondary: #fb923c; /* orange-400 */
   --accent-glow: #f9731640;
   --accent-blue: #1d3557;
   --accent-green: #22c55e; /* green-500 */
   --accent-purple: #6c47a0;
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --text-muted: #999999;
-  --border-color: #333333;
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-color: #e7dccd;
   --gradient-fire: linear-gradient(135deg, #f97316, #fb923c);
   --gradient-blue: linear-gradient(135deg, #1d3557, #457b9d);
-  --gradient-dark: linear-gradient(180deg, #000000 0%, #111111 100%);
+  --gradient-dark: linear-gradient(180deg, #f7f1e8 0%, #fff8ee 100%);
 }
 
 .admin-theme {
@@ -302,7 +302,7 @@ body {
   position: relative;
   height: 220px;
   overflow: hidden;
-  background: #1a1a2e;
+  background: #fff1df;
 }
 
 .mode-card-image img {
@@ -404,9 +404,9 @@ body {
 
 /* ===== FOOTER ===== */
 .footer-gradient {
-  background: #1a1a2e;
-  color: #ccc;
-  border-top: none;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 /* ===== FAQ ===== */

@@ -86,7 +86,7 @@ export default function MainPortalPage() {
         </div>
       </section>
 
-      <section className="py-20 relative overflow-hidden" style={{ background: "#1a1a2e" }}>
+      <section className="py-20 relative overflow-hidden" style={{ background: "var(--bg-secondary)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-20"
@@ -94,10 +94,10 @@ export default function MainPortalPage() {
           />
         </div>
         <div className="max-w-3xl mx-auto text-center px-4 relative z-10">
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-white">
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-4" style={{ color: "var(--text-primary)" }}>
             Ready to <span className="fire-text">Dominate</span>?
           </h2>
-          <p className="text-lg mb-8 text-gray-300">
+          <p className="text-lg mb-8" style={{ color: "var(--text-secondary)" }}>
             Join thousands of gamers competing for real rewards. Your next win is just a click away.
           </p>
           <Link href="/main/modes" className="fire-btn text-lg !py-4 !px-12">

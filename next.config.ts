@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/",
+        destination: "/main",
+        permanent: false,
+      },
+      {
         source: "/about",
         destination: "/main/about",
         permanent: false,
@@ -21,6 +26,36 @@ const nextConfig: NextConfig = {
       {
         source: "/modes/:path*",
         destination: "/main/modes/:path*",
+        permanent: false,
+      },
+      {
+        source: "/shop/:path*",
+        destination: "/backup-old-ecommerce/shop/:path*",
+        permanent: false,
+      },
+      {
+        source: "/cart",
+        destination: "/backup-old-ecommerce/cart",
+        permanent: false,
+      },
+      {
+        source: "/checkout",
+        destination: "/backup-old-ecommerce/checkout",
+        permanent: false,
+      },
+      {
+        source: "/dashboard",
+        destination: "/backup-old-ecommerce/dashboard",
+        permanent: false,
+      },
+      {
+        source: "/support",
+        destination: "/backup-old-ecommerce/support",
+        permanent: false,
+      },
+      {
+        source: "/policies/:path*",
+        destination: "/backup-old-ecommerce/policies/:path*",
         permanent: false,
       },
     ];
