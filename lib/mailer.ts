@@ -38,7 +38,12 @@ function getTransporter() {
 
 export async function sendPasswordResetOtpEmail(input: PasswordResetOtpEmailInput) {
   const transporter = getTransporter();
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const configuredFrom = process.env.SMTP_FROM?.trim();
+  const preferredFrom = "team totalfire <team@totalfire.in>";
+  const from =
+    !configuredFrom || configuredFrom.toLowerCase().includes("@smtp-brevo.com")
+      ? preferredFrom
+      : configuredFrom;
 
   if (!from) {
     throw new Error("SMTP_FROM or SMTP_USER must be configured");

@@ -34,3 +34,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## OTP Email Setup
+
+Forgot-password OTP emails use SMTP through Nodemailer. Configure these environment variables on the server where this app is deployed:
+
+```dotenv
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=<your smtp login>
+SMTP_PASS=<your smtp key>
+SMTP_FROM=team totalfire <team@totalfire.in>
+```
+
+For production delivery, verify `team@totalfire.in` and the `totalfire.in` domain in your SMTP provider dashboard (SPF, DKIM, and sender verification).
