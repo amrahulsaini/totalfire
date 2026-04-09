@@ -21,11 +21,15 @@ class AppLocalization {
     'Contact Support': 'सपोर्ट से संपर्क करें',
     'Need help with payments, rooms, slots, or account issues? Reach us directly:':
         'पेमेंट, रूम, स्लॉट या अकाउंट से जुड़ी मदद चाहिए? सीधे संपर्क करें:',
-    'WhatsApp: 7878159565': 'व्हाट्सऐप: 7878159565',
+    'WhatsApp: 7878368325': 'व्हाट्सऐप: 7878368325',
+    'Instagram: @totalfire.in': 'इंस्टाग्राम: @totalfire.in',
     'Telegram: @total_fire': 'टेलीग्राम: @total_fire',
     'Open WhatsApp': 'व्हाट्सऐप खोलें',
+    'Open Instagram': 'इंस्टाग्राम खोलें',
     'Open Telegram': 'टेलीग्राम खोलें',
     'Support channels could not be opened.': 'सपोर्ट लिंक नहीं खुल पाया।',
+    'Disclaimer: For any payment issues, contact support immediately.':
+      'डिस्क्लेमर: किसी भी पेमेंट समस्या के लिए तुरंत सपोर्ट से संपर्क करें।',
     'Total Fire': 'टोटल फायर',
     'Welcome back': 'वापसी पर स्वागत है',
     'Welcome back, warrior': 'वापसी पर स्वागत है, योद्धा',
@@ -105,6 +109,7 @@ class AppLocalization {
     'Credits, debits, entry fees, and match rewards will appear here.':
         'क्रेडिट, डेबिट, एंट्री फीस और मैच रिवॉर्ड यहां दिखेंगे।',
     'Notifications': 'सूचनाएं',
+    'Leaderboard': 'लीडरबोर्ड',
     'Browse Modes': 'मोड्स ब्राउज़ करें',
     'Payments & Withdrawals': 'पेमेंट और निकासी',
     'Payments History': 'पेमेंट हिस्ट्री',
@@ -118,6 +123,14 @@ class AppLocalization {
     'Cancel': 'रद्द करें',
     'Delete All': 'सभी हटाएं',
     'No notifications yet': 'अभी कोई सूचना नहीं',
+    'Could not load leaderboard': 'लीडरबोर्ड लोड नहीं हो सका',
+    'No leaderboard data yet': 'अभी लीडरबोर्ड डेटा उपलब्ध नहीं है',
+    'Play tournaments to appear in rankings.': 'रैंकिंग में आने के लिए टूर्नामेंट खेलें।',
+    'Top Earners Leaderboard': 'टॉप अर्नर्स लीडरबोर्ड',
+    'No rankings yet. Your first match result can put you on top.':
+      'अभी कोई रैंकिंग नहीं है। आपका पहला मैच रिजल्ट आपको टॉप पर ला सकता है।',
+    'Ranks are sorted by total earnings in decreasing order.':
+      'रैंक कुल कमाई के घटते क्रम में दिखाई जाती हैं।',
     'Wallet updates, withdrawal actions, and tournament events will appear here.':
         'वॉलेट अपडेट, निकासी अपडेट और टूर्नामेंट इवेंट यहां दिखाई देंगे।',
     'Transactions': 'लेनदेन',

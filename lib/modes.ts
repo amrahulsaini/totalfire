@@ -123,7 +123,7 @@ export const allModes: ModeConfig[] = [
     title: "CS 1 vs 1",
     slug: "cs-1v1",
     image: "/modes-images/cs1vs1.jpeg",
-    appImage: "/modes-images/app-inside/cs2vs2.jpeg",
+    appImage: "/modes-images/app-inside/cs1vs1.webp",
     category: "cs",
     players: "2 Players",
     maxPlayers: 2,

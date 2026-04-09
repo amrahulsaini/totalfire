@@ -247,7 +247,7 @@ INSERT INTO modes (
     'CS 1 vs 1',
     'cs-1v1',
     '/modes-images/cs1vs1.jpeg',
-    '/modes-images/app-inside/cs2vs2.jpeg',
+    '/modes-images/app-inside/cs1vs1.webp',
     'cs',
     '2 Players',
     2,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -64,6 +65,8 @@ class PushService {
 
     final messaging = FirebaseMessaging.instance;
 
+    await messaging.setAutoInitEnabled(true);
+
     await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -71,13 +74,19 @@ class PushService {
       provisional: false,
     );
 
-      await _ensureLocalNotificationsReady();
+    await messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    await _ensureLocalNotificationsReady();
 
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     messaging.onTokenRefresh.listen((token) {
       if (token.isNotEmpty) {
-        ApiService.registerPushToken(token: token);
+        unawaited(ApiService.registerPushToken(token: token));
       }
     });
 

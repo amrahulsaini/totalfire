@@ -485,6 +485,32 @@ class AppNotificationItem {
   }
 }
 
+class LeaderboardEntryItem {
+  const LeaderboardEntryItem({
+    required this.rank,
+    required this.username,
+    required this.gameName,
+    required this.totalEarnings,
+    required this.totalKills,
+  });
+
+  final int rank;
+  final String username;
+  final String gameName;
+  final double totalEarnings;
+  final int totalKills;
+
+  factory LeaderboardEntryItem.fromJson(Map<String, dynamic> json) {
+    return LeaderboardEntryItem(
+      rank: _intValue(json['rank']),
+      username: _stringValue(json['username']),
+      gameName: _stringValue(json['game_name']),
+      totalEarnings: _doubleValue(json['total_earnings']),
+      totalKills: _intValue(json['total_kills']),
+    );
+  }
+}
+
 Map<String, dynamic>? _nullableMapValue(dynamic value) {
   if (value is Map<String, dynamic>) {
     return value;

@@ -61,20 +61,22 @@ export async function POST(request: Request) {
     );
   }
 
-  for (const row of userRows) {
-    await createUserNotification({
-      userId: Number(row.user_id),
-      type,
-      title,
-      message,
-      payload: {
-        tournamentId,
-        matchId: String(tournament.match_id),
-        tournamentTitle: String(tournament.title),
-        sentByAdminId: Number(admin.id),
-      },
-    });
-  }
+  await Promise.allSettled(
+    userRows.map((row) =>
+      createUserNotification({
+        userId: Number(row.user_id),
+        type,
+        title,
+        message,
+        payload: {
+          tournamentId,
+          matchId: String(tournament.match_id),
+          tournamentTitle: String(tournament.title),
+          sentByAdminId: Number(admin.id),
+        },
+      })
+    )
+  );
 
   return NextResponse.json({
     success: true,

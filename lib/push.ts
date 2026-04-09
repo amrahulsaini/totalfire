@@ -76,13 +76,22 @@ export async function sendPushToUser(input: SendPushToUserInput) {
       return;
     }
 
-    const tokens = tokenRows
-      .map((row) => row.fcm_token?.toString() ?? "")
-      .filter((token) => token.length > 0);
+    const activeTokens = tokenRows
+      .map((row) => ({
+        id: Number(row.id),
+        token: row.fcm_token?.toString() ?? "",
+      }))
+      .filter((row) => row.token.length > 0);
+
+    const tokens = activeTokens.map((row) => row.token);
 
     if (tokens.length === 0) {
       return;
     }
+
+    const eventId = `tf_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
 
     const response = await messaging.sendEachForMulticast({
       tokens,
@@ -94,10 +103,14 @@ export async function sendPushToUser(input: SendPushToUserInput) {
         title: input.title,
         body: input.body,
         category: input.category,
+        eventId,
+        sentAt: String(Date.now()),
         ...toStringMap(input.data),
       },
       android: {
         priority: "high",
+        ttl: 15 * 60 * 1000,
+        directBootOk: true,
         notification: {
           channelId: ANDROID_PUSH_CHANNEL_ID,
           sound: "default",
@@ -107,18 +120,27 @@ export async function sendPushToUser(input: SendPushToUserInput) {
         },
       },
       apns: {
-        headers: { "apns-priority": "10" },
+        headers: {
+          "apns-priority": "10",
+          "apns-push-type": "alert",
+        },
         payload: {
           aps: {
             sound: "default",
           },
         },
       },
+      webpush: {
+        headers: {
+          Urgency: "high",
+          TTL: "900",
+        },
+      },
     });
 
     for (let i = 0; i < response.responses.length; i += 1) {
       const sendResult = response.responses[i];
-      const tokenRow = tokenRows[i];
+      const tokenRow = activeTokens[i];
       const tokenId = tokenRow ? Number(tokenRow.id) : null;
 
       if (sendResult.success) {
@@ -131,10 +153,12 @@ export async function sendPushToUser(input: SendPushToUserInput) {
         errorCode.includes("registration-token-not-registered") ||
         errorCode.includes("invalid-registration-token")
       ) {
-        await pool.query(
-          "UPDATE user_push_tokens SET is_active = 0 WHERE id = ?",
-          [tokenId]
-        );
+        if (tokenId) {
+          await pool.query(
+            "UPDATE user_push_tokens SET is_active = 0 WHERE id = ?",
+            [tokenId]
+          );
+        }
       }
     }
   } catch (error) {

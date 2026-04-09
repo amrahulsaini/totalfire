@@ -476,6 +476,27 @@ class ApiService {
         .toList();
   }
 
+  static Future<List<LeaderboardEntryItem>> getLeaderboard({int limit = 100}) async {
+    final result = await _request(
+      'GET',
+      '/api/leaderboard',
+      query: {'limit': limit.toString()},
+    );
+
+    if (result.statusCode != 200) {
+      throw ApiException(
+        result.data['error']?.toString() ?? 'Failed to load leaderboard',
+        statusCode: result.statusCode,
+      );
+    }
+
+    final leaders = result.data['leaders'] as List<dynamic>? ?? const [];
+    return leaders
+        .whereType<Map<String, dynamic>>()
+        .map(LeaderboardEntryItem.fromJson)
+        .toList();
+  }
+
   static Future<NotificationsResult> getNotifications({int limit = 50}) async {
     final result = await _request(
       'GET',

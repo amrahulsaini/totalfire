@@ -195,7 +195,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                                         SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'Warning: Room ID and password are private. Do not share these details publicly or your slot may be compromised.',
+                                            'Warning: Room ID and password are private. Do not share these details publicly. If shared, your account may be banned or blocked from using the app.',
                                             style: TextStyle(
                                               color: Color(0xFF9A3412),
                                               fontSize: 12,

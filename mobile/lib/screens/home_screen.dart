@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../utils/time_utils.dart';
 import '../widgets/three_dots_loader.dart';
 import 'category_modes_screen.dart';
+import 'leaderboard_screen.dart';
 import 'notifications_screen.dart';
 import 'payments_screen.dart';
 import 'tournament_detail_screen.dart';
@@ -26,7 +27,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final Razorpay _razorpay = Razorpay();
   final TextEditingController _walletAmountController =
       TextEditingController(text: '100');
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
@@ -55,9 +57,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _razorpay.clear();
     _walletAmountController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(PushService.syncTokenWithBackend());
+      unawaited(_refreshNotificationsCount());
+    }
   }
 
   List<TournamentSummary> get _filteredMyTournaments {
@@ -374,6 +385,13 @@ class _HomeScreenState extends State<HomeScreen> {
     await _refreshNotificationsCount();
   }
 
+  Future<void> _openLeaderboardScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+    );
+  }
+
   Future<void> _openSupportUrl(String url) async {
     final uri = Uri.parse(url);
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -567,6 +585,25 @@ class _HomeScreenState extends State<HomeScreen> {
           _WalletHeroCard(
             balance: _walletBalance,
             onTap: () => setState(() => _currentIndex = 2),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFED7AA)),
+            ),
+            child: Text(
+              tx('Disclaimer: For any payment issues, contact support immediately.'),
+              style: const TextStyle(
+                color: Color(0xFF9A3412),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
+              ),
+            ),
           ),
           const SizedBox(height: 28),
           Text(
@@ -981,13 +1018,19 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: _openNotificationsScreen,
         ),
         _ProfileActionTile(
+          icon: Icons.emoji_events_outlined,
+          title: tx('Leaderboard'),
+          onTap: _openLeaderboardScreen,
+        ),
+        _ProfileActionTile(
           icon: Icons.sports_esports_outlined,
           title: tx('Browse Modes'),
           onTap: () => setState(() => _currentIndex = 0),
         ),
         const SizedBox(height: 4),
         _SupportContactCard(
-          onOpenWhatsApp: () => _openSupportUrl('https://wa.me/917878159565'),
+          onOpenWhatsApp: () => _openSupportUrl('https://wa.me/917878368325'),
+          onOpenInstagram: () => _openSupportUrl('https://instagram.com/totalfire.in'),
           onOpenTelegram: () => _openSupportUrl('https://t.me/total_fire'),
         ),
         const SizedBox(height: 18),
@@ -1406,17 +1449,21 @@ class _MyTournamentCard extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: roomVisible
-                      ? AppColors.accentGreen.withValues(alpha: 0.08)
+                      ? const Color(0xFFFFF7ED)
                       : AppColors.bgSecondary,
                   borderRadius: BorderRadius.circular(14),
+                  border: roomVisible
+                      ? Border.all(color: const Color(0xFFFED7AA))
+                      : null,
                 ),
                 child: Text(
                   roomVisible
-                      ? 'Room ${tournament.roomId} • Pass ${tournament.roomPassword ?? '-'}'
+                      ? 'Room ${tournament.roomId} • Pass ${tournament.roomPassword ?? '-'}\nDo not share room details. Sharing can get your account banned or blocked from using the app.'
                       : 'Room ID unlocks 5 minutes before start',
                   style: TextStyle(
-                    color: roomVisible ? AppColors.accentGreen : AppColors.textSecondary,
+                    color: roomVisible ? const Color(0xFF9A3412) : AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
+                    height: roomVisible ? 1.35 : 1.2,
                   ),
                 ),
               ),
@@ -1565,10 +1612,12 @@ class _ProfileActionTile extends StatelessWidget {
 class _SupportContactCard extends StatelessWidget {
   const _SupportContactCard({
     required this.onOpenWhatsApp,
+    required this.onOpenInstagram,
     required this.onOpenTelegram,
   });
 
   final VoidCallback onOpenWhatsApp;
+  final VoidCallback onOpenInstagram;
   final VoidCallback onOpenTelegram;
 
   @override
@@ -1615,9 +1664,17 @@ class _SupportContactCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            tx('WhatsApp: 7878159565'),
+            tx('WhatsApp: 7878368325'),
             style: const TextStyle(
               color: Color(0xFF14532D),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            tx('Instagram: @totalfire.in'),
+            style: const TextStyle(
+              color: Color(0xFFBE185D),
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -1631,9 +1688,10 @@ class _SupportContactCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          Column(
             children: [
-              Expanded(
+              SizedBox(
+                width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: onOpenWhatsApp,
                   icon: const Icon(Icons.chat),
@@ -1644,8 +1702,22 @@ class _SupportContactCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onOpenInstagram,
+                  icon: const Icon(Icons.camera_alt_outlined),
+                  label: Text(tx('Open Instagram')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFBE185D),
+                    side: const BorderSide(color: Color(0xFFF9A8D4)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: onOpenTelegram,
                   icon: const Icon(Icons.send_rounded),

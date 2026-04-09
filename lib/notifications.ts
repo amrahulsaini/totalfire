@@ -36,13 +36,17 @@ export async function createUserNotification(input: CreateNotificationInput) {
     ]
   );
 
-  void sendPushToUser({
-    userId: input.userId,
-    category: input.type,
-    title: input.title,
-    body: input.message,
-    data: input.payload,
-  });
+  try {
+    await sendPushToUser({
+      userId: input.userId,
+      category: input.type,
+      title: input.title,
+      body: input.message,
+      data: input.payload,
+    });
+  } catch (error) {
+    console.error("Push dispatch failed:", error);
+  }
 }
 
 interface NotifyTournamentParticipantsInput {
@@ -61,13 +65,15 @@ export async function notifyTournamentParticipants(
     [input.tournamentId]
   );
 
-  for (const row of rows) {
-    await createUserNotification({
-      userId: Number(row.user_id),
-      type: input.type,
-      title: input.title,
-      message: input.message,
-      payload: input.payload,
-    });
-  }
+  await Promise.allSettled(
+    rows.map((row) =>
+      createUserNotification({
+        userId: Number(row.user_id),
+        type: input.type,
+        title: input.title,
+        message: input.message,
+        payload: input.payload,
+      })
+    )
+  );
 }

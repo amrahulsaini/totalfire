@@ -7,6 +7,10 @@ ALTER TABLE modes
 ALTER TABLE tournaments
   MODIFY COLUMN category ENUM('br','cs','lw','hs') NOT NULL;
 
+UPDATE modes
+SET app_image = '/modes-images/app-inside/cs1vs1.webp'
+WHERE slug = 'cs-1v1';
+
 ALTER TABLE withdrawal_requests
   ADD COLUMN IF NOT EXISTS method VARCHAR(30) NULL AFTER amount,
   ADD COLUMN IF NOT EXISTS account_details VARCHAR(255) NULL AFTER method,
