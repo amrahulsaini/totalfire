@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -5,13 +8,70 @@ interface HeroSectionProps {
   basePath?: string;
 }
 
+interface AppStats {
+  activeUsers: number;
+  downloads: number;
+  activeWindowDays: number;
+}
+
 export default function HeroSection({ basePath = "" }: HeroSectionProps) {
+  const [stats, setStats] = useState<AppStats>({
+    activeUsers: 0,
+    downloads: 0,
+    activeWindowDays: 30,
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
   const portalHref = (path: string) => {
     if (!basePath) {
       return path;
     }
     return path === "/" ? basePath : `${basePath}${path}`;
   };
+
+  const formatCount = (value: number) =>
+    new Intl.NumberFormat("en-IN").format(Math.max(0, Math.trunc(value)));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStats = async () => {
+      try {
+        const response = await fetch("/api/public/app-stats", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Failed to load app stats");
+        }
+
+        const data = (await response.json()) as Partial<AppStats>;
+
+        if (!cancelled) {
+          setStats({
+            activeUsers: Number(data.activeUsers ?? 0),
+            downloads: Number(data.downloads ?? 0),
+            activeWindowDays: Number(data.activeWindowDays ?? 30),
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setStats((prev) => ({
+            ...prev,
+            activeUsers: 0,
+            downloads: 0,
+          }));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingStats(false);
+        }
+      }
+    };
+
+    void loadStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section className="hero-bg relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
@@ -47,41 +107,47 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
           {/* Subtitle */}
           <p className="animate-fade-in-up stagger-3 mt-6 text-lg md:text-xl max-w-2xl"
             style={{ color: "var(--text-secondary)" }}>
-            India&apos;s ultimate esports tournament platform. Join skill-based matches,
-            compete against the best, and earn real money rewards.
+            Download the latest TotalFire APK, join skill-based matches,
+            and compete against the best players.
           </p>
 
           {/* CTA Buttons */}
           <div className="animate-fade-in-up stagger-4 flex flex-col sm:flex-row gap-4 mt-10">
-            <Link href={portalHref("/modes")} className="fire-btn text-lg !py-4 !px-10">
+            <Link
+              href="/downloads/totalfire-latest.apk"
+              className="fire-btn text-lg !py-4 !px-10"
+              download="totalfire-latest.apk"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l-4-4m4 4l4-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
               </svg>
-              Browse Tournaments
+              Download APK
             </Link>
-            <Link href={portalHref("/about")} className="outline-btn text-lg !py-4 !px-10">
-              Learn More
+            <Link href={portalHref("/modes")} className="outline-btn text-lg !py-4 !px-10">
+              Browse Tournaments
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="animate-fade-in-up stagger-5 mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12">
+          <div className="animate-fade-in-up stagger-5 mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-12">
             <div className="stat-item">
-              <div className="stat-number fire-text">7+</div>
-              <div className="stat-label">Game Modes</div>
+              <div className="stat-number fire-text">
+                {isLoadingStats ? "..." : formatCount(stats.activeUsers)}
+              </div>
+              <div className="stat-label">Active Users</div>
+              <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+                Last {stats.activeWindowDays} days
+              </div>
             </div>
             <div className="stat-item">
-              <div className="stat-number blue-text">₹15+</div>
-              <div className="stat-label">Per Kill Rewards</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number fire-text">₹20</div>
-              <div className="stat-label">Entry From</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number blue-text">100%</div>
-              <div className="stat-label">Secure Payments</div>
+              <div className="stat-number blue-text">
+                {isLoadingStats ? "..." : formatCount(stats.downloads)}
+              </div>
+              <div className="stat-label">App Downloads</div>
+              <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+                Total installs
+              </div>
             </div>
           </div>
         </div>
