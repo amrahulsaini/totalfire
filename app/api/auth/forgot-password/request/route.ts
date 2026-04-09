@@ -12,10 +12,16 @@ import {
 
 export const runtime = "nodejs";
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
 type UserRow = RowDataPacket & {
   id: number;
   username: string;
   email: string;
+};
+
+type ActiveOtpRow = RowDataPacket & {
+  age_seconds: number | string | null;
 };
 
 export async function POST(request: Request) {
@@ -42,6 +48,30 @@ export async function POST(request: Request) {
   }
 
   const user = users[0];
+
+  const [activeOtpRows] = await pool.query<ActiveOtpRow[]>(
+    `SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds
+     FROM password_reset_otps
+     WHERE user_id = ? AND used_at IS NULL
+     ORDER BY id DESC
+     LIMIT 1`,
+    [user.id]
+  );
+
+  if (activeOtpRows.length > 0) {
+    const ageSeconds = Number(activeOtpRows[0].age_seconds ?? RESEND_COOLDOWN_SECONDS);
+    if (Number.isFinite(ageSeconds) && ageSeconds >= 0 && ageSeconds < RESEND_COOLDOWN_SECONDS) {
+      const retryAfterSeconds = RESEND_COOLDOWN_SECONDS - Math.floor(ageSeconds);
+      return NextResponse.json(
+        {
+          error: `Please wait ${retryAfterSeconds} seconds before requesting OTP again`,
+          retryAfterSeconds,
+        },
+        { status: 429 }
+      );
+    }
+  }
+
   const otp = generateSixDigitOtp();
   const otpHash = await bcrypt.hash(otp, 12);
   const expiresAt = getOtpExpiryDate();
@@ -85,5 +115,6 @@ export async function POST(request: Request) {
     message: "OTP sent to your registered email",
     email: maskEmail(String(user.email)),
     expiresInMinutes: PASSWORD_RESET_OTP_EXPIRY_MINUTES,
+    resendCooldownSeconds: RESEND_COOLDOWN_SECONDS,
   });
 }

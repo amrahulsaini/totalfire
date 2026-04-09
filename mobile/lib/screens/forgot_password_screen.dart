@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../l10n/app_localization.dart';
@@ -12,11 +14,15 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  static const int _defaultResendCooldownSeconds = 60;
+
   final _usernameController = TextEditingController();
   final _otpController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  Timer? _resendTimer;
+  int _resendSecondsLeft = 0;
   bool _isLoading = false;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
@@ -27,6 +33,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   void dispose() {
+    _stopResendCooldown();
     _usernameController.dispose();
     _otpController.dispose();
     _newPasswordController.dispose();
@@ -34,8 +41,50 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _requestOtp() async {
-    final username = _usernameController.text.trim().toLowerCase();
+  void _stopResendCooldown() {
+    _resendTimer?.cancel();
+    _resendTimer = null;
+  }
+
+  void _startResendCooldown(int seconds) {
+    final safeSeconds = seconds > 0 ? seconds : _defaultResendCooldownSeconds;
+    _stopResendCooldown();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _resendSecondsLeft = safeSeconds;
+    });
+
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_resendSecondsLeft <= 1) {
+          _resendSecondsLeft = 0;
+          timer.cancel();
+        } else {
+          _resendSecondsLeft -= 1;
+        }
+      });
+    });
+  }
+
+  String _formatCooldown(int seconds) {
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    final remainder = (seconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$remainder';
+  }
+
+  Future<void> _requestOtp({bool isResend = false}) async {
+    final sourceUsername =
+        isResend && _username.isNotEmpty ? _username : _usernameController.text;
+    final username = sourceUsername.trim().toLowerCase();
 
     if (username.length < 3 || !RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(username)) {
       _showError(context.tx('Enter valid username'));
@@ -52,13 +101,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
+    final cooldownRaw = response.data?['resendCooldownSeconds'];
+    final parsedCooldown = cooldownRaw is num
+        ? cooldownRaw.toInt()
+        : int.tryParse(cooldownRaw?.toString() ?? '');
+    final cooldownSeconds = parsedCooldown ?? _defaultResendCooldownSeconds;
+
     setState(() {
       _username = username;
       _maskedEmail = response.data?['email']?.toString();
       _step = _ForgotPasswordStep.otp;
+      _otpController.clear();
     });
 
-    _showSuccess(response.message);
+    _startResendCooldown(cooldownSeconds);
+    _showSuccess(isResend ? context.tx('OTP resent successfully') : response.message);
   }
 
   Future<void> _verifyOtp() async {
@@ -259,7 +316,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         SizedBox(
           height: 54,
           child: ElevatedButton(
-            onPressed: _isLoading ? null : _requestOtp,
+            onPressed: _isLoading ? null : () => _requestOtp(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accentRed,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -335,6 +392,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     tx('Verify OTP'),
                     style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                   ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: _isLoading || _resendSecondsLeft > 0
+                ? null
+                : () => _requestOtp(isResend: true),
+            child: Text(
+              _resendSecondsLeft > 0
+                  ? '${tx('Resend OTP in')} ${_formatCooldown(_resendSecondsLeft)}'
+                  : tx('Resend OTP'),
+              style: const TextStyle(
+                color: AppColors.accentRed,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ],
