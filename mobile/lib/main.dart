@@ -4,7 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'l10n/app_localization.dart';
+import 'models/app_models.dart';
 import 'theme/app_theme.dart';
 import 'services/api_service.dart';
 import 'services/language_service.dart';
@@ -83,6 +86,8 @@ class _AuthGateState extends State<_AuthGate> {
   bool _isLoading = true;
   bool _isLoggedIn = false;
   bool _hasLanguageSelection = false;
+  AppVersionPolicy? _requiredUpdatePolicy;
+  String _appVersionLabel = '1.0.0';
 
   @override
   void initState() {
@@ -91,8 +96,27 @@ class _AuthGateState extends State<_AuthGate> {
   }
 
   Future<void> _bootstrap() async {
-    final hasLanguageSelection = await LanguageService.hasSelectedLanguage();
-    final isLoggedIn = await ApiService.isLoggedIn();
+    final hasLanguageSelectionFuture = LanguageService.hasSelectedLanguage();
+    final isLoggedInFuture = ApiService.isLoggedIn();
+
+    String installedVersion = '1.0.0';
+    String buildNumber = '';
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      installedVersion = packageInfo.version.trim().isEmpty
+          ? installedVersion
+          : packageInfo.version.trim();
+      buildNumber = packageInfo.buildNumber.trim();
+    } catch (_) {
+      // Keep fallback version if package info is unavailable.
+    }
+
+    final versionPolicy = await ApiService.getVersionPolicy(
+      installedVersion: installedVersion,
+    );
+
+    final hasLanguageSelection = await hasLanguageSelectionFuture;
+    final isLoggedIn = await isLoggedInFuture;
 
     if (isLoggedIn && hasLanguageSelection) {
       await LanguageService.syncWithCloudIfLoggedIn();
@@ -106,7 +130,44 @@ class _AuthGateState extends State<_AuthGate> {
       _isLoading = false;
       _isLoggedIn = isLoggedIn;
       _hasLanguageSelection = hasLanguageSelection;
+      _requiredUpdatePolicy =
+          versionPolicy != null && versionPolicy.requiresUpdate ? versionPolicy : null;
+      _appVersionLabel = buildNumber.isEmpty
+          ? installedVersion
+          : '$installedVersion+$buildNumber';
     });
+  }
+
+  Future<void> _openUpdateLink() async {
+    final policy = _requiredUpdatePolicy;
+    if (policy == null) {
+      return;
+    }
+
+    final uri = Uri.tryParse(policy.downloadUrl);
+    if (uri == null) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Update link is invalid. Contact support.')),
+      );
+      return;
+    }
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open update link. Please try again.')),
+      );
+    }
+  }
+
+  Future<void> _retryVersionCheck() async {
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+    await _bootstrap();
   }
 
   Future<void> _onLanguageSelected() async {
@@ -133,6 +194,15 @@ class _AuthGateState extends State<_AuthGate> {
       );
     }
 
+    if (_requiredUpdatePolicy != null) {
+      return _ForceUpdateScreen(
+        policy: _requiredUpdatePolicy!,
+        installedVersion: _appVersionLabel,
+        onUpdatePressed: _openUpdateLink,
+        onRetryPressed: _retryVersionCheck,
+      );
+    }
+
     if (!_hasLanguageSelection) {
       return LanguageSelectionScreen(onSelected: _onLanguageSelected);
     }
@@ -142,5 +212,92 @@ class _AuthGateState extends State<_AuthGate> {
     }
 
     return const LoginScreen();
+  }
+}
+
+class _ForceUpdateScreen extends StatelessWidget {
+  const _ForceUpdateScreen({
+    required this.policy,
+    required this.installedVersion,
+    required this.onUpdatePressed,
+    required this.onRetryPressed,
+  });
+
+  final AppVersionPolicy policy;
+  final String installedVersion;
+  final Future<void> Function() onUpdatePressed;
+  final Future<void> Function() onRetryPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
+              Icon(
+                Icons.system_update_alt_rounded,
+                size: 74,
+                color: AppColors.accentRed,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                policy.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                policy.message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.45,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Installed: $installedVersion'),
+                    const SizedBox(height: 4),
+                    Text('Latest: ${policy.latestVersion}'),
+                    const SizedBox(height: 4),
+                    Text('Minimum supported: ${policy.minSupportedVersion}'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => onUpdatePressed(),
+                icon: const Icon(Icons.download_rounded),
+                label: const Text('Update Now'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => onRetryPressed(),
+                child: const Text('Retry Check'),
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -332,6 +332,44 @@ class WalletTransactionItem {
   }
 }
 
+class AppVersionPolicy {
+  const AppVersionPolicy({
+    required this.latestVersion,
+    required this.minSupportedVersion,
+    required this.forceUpdate,
+    required this.title,
+    required this.message,
+    required this.downloadUrl,
+    required this.shouldUpdate,
+    required this.requiresUpdate,
+    this.installedVersion,
+  });
+
+  final String latestVersion;
+  final String minSupportedVersion;
+  final bool forceUpdate;
+  final String title;
+  final String message;
+  final String downloadUrl;
+  final bool shouldUpdate;
+  final bool requiresUpdate;
+  final String? installedVersion;
+
+  factory AppVersionPolicy.fromJson(Map<String, dynamic> json) {
+    return AppVersionPolicy(
+      latestVersion: _stringValue(json['latestVersion']),
+      minSupportedVersion: _stringValue(json['minSupportedVersion']),
+      forceUpdate: _boolValue(json['forceUpdate']),
+      title: _stringValue(json['title']),
+      message: _stringValue(json['message']),
+      downloadUrl: _stringValue(json['downloadUrl']),
+      shouldUpdate: _boolValue(json['shouldUpdate']),
+      requiresUpdate: _boolValue(json['requiresUpdate']),
+      installedVersion: _nullableStringValue(json['installedVersion']),
+    );
+  }
+}
+
 String _stringValue(dynamic value) => value?.toString() ?? '';
 
 String? _nullableStringValue(dynamic value) {

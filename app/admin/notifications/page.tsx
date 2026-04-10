@@ -156,6 +156,9 @@ export default function AdminTournamentNotificationsPage() {
               <Link href="/admin" className="outline-btn !px-4 !py-2 !text-sm">
                 Back To Admin
               </Link>
+              <Link href="/admin/app-update" className="outline-btn !px-4 !py-2 !text-sm">
+                App Update Portal
+              </Link>
               <Link href="/admin/modes" className="outline-btn !px-4 !py-2 !text-sm">
                 Edit Modes Portal
               </Link>

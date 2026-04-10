@@ -342,6 +342,27 @@ class ApiService {
     );
   }
 
+  static Future<AppVersionPolicy?> getVersionPolicy({
+    required String installedVersion,
+  }) async {
+    try {
+      final result = await _request(
+        'GET',
+        '/api/app/version-policy',
+        query: {'version': installedVersion.trim()},
+        authorized: false,
+      );
+
+      if (result.statusCode != 200) {
+        return null;
+      }
+
+      return AppVersionPolicy.fromJson(result.data);
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<List<TournamentSummary>> getTournaments({
     String? modeSlug,
     String? status,

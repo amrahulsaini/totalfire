@@ -532,6 +532,9 @@ export default function AdminDashboardPage() {
           <Link href="/admin/notifications" className="outline-btn !px-4 !py-2 !text-sm">
             Send Tournament Notifications
           </Link>
+          <Link href="/admin/app-update" className="outline-btn !px-4 !py-2 !text-sm">
+            App Update Portal
+          </Link>
           <Link href="/admin/modes" className="outline-btn !px-4 !py-2 !text-sm">
             Edit Modes Portal
           </Link>

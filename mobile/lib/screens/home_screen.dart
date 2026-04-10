@@ -3,6 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localization.dart';
@@ -44,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isWalletBusy = false;
   String? _pendingWalletOrderId;
+  String _appVersionLabel = '';
 
   @override
   void initState() {
@@ -52,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    _loadAppVersion();
     _loadDashboard();
   }
 
@@ -390,6 +393,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       context,
       MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
     );
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final version = info.version.trim();
+      final buildNumber = info.buildNumber.trim();
+      final label = buildNumber.isEmpty ? version : '$version+$buildNumber';
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _appVersionLabel = label);
+    } catch (_) {
+      // Keep profile usable if package info is unavailable.
+    }
   }
 
   Future<void> _openSupportUrl(String url) async {
@@ -1027,6 +1047,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           title: tx('Browse Modes'),
           onTap: () => setState(() => _currentIndex = 0),
         ),
+        if (_appVersionLabel.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: AppColors.accentBlue),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'App Version: $_appVersionLabel',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 4),
         _SupportContactCard(
           onOpenWhatsApp: () => _openSupportUrl('https://wa.me/917878368325'),
