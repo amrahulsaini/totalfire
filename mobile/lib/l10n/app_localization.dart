@@ -62,6 +62,8 @@ class AppLocalization {
     'Log In': 'लॉग इन',
     'OR': 'या',
     'Continue with Google': 'गूगल से जारी रखें',
+    'This feature is not available yet. It will be added soon.':
+      'यह फीचर अभी उपलब्ध नहीं है। इसे जल्द जोड़ा जाएगा।',
     "Don't have an account? ": 'क्या आपका अकाउंट नहीं है? ',
     'Sign Up': 'साइन अप',
     'Create your account & start competing': 'अपना अकाउंट बनाएं और खेलना शुरू करें',

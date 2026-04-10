@@ -93,6 +93,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
+  void _showGoogleComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.tx('This feature is not available yet. It will be added soon.'),
+        ),
+        backgroundColor: AppColors.accentRed,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tx = context.tx;
@@ -469,9 +480,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SizedBox(
                 height: 56,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    // TODO: Google sign up
-                  },
+                  onPressed: _showGoogleComingSoon,
                   icon: const Icon(Icons.g_mobiledata, size: 28),
                   label: Text(tx('Continue with Google')),
                   style: OutlinedButton.styleFrom(
