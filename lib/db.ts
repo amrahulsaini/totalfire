@@ -6,6 +6,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || undefined,
   database: process.env.DB_NAME,
   ...(process.env.DB_PORT ? { port: Number(process.env.DB_PORT) } : {}),
+  charset: "utf8mb4",
   dateStrings: true,
   waitForConnections: true,
   connectionLimit: 10,
@@ -16,6 +17,7 @@ const pool = mysql.createPool({
 // and NOW() / CURRENT_TIMESTAMP use Indian Standard Time (+05:30).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (pool as any).pool.on("connection", (conn: any) => {
+  conn.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
   conn.query("SET time_zone = '+05:30'");
 });
 
@@ -28,6 +30,16 @@ pool
   )
   .catch(() => {
     // Non-fatal — column may already exist or table not yet created.
+  });
+
+pool
+  .query(
+    `ALTER TABLE tournament_entries
+     MODIFY COLUMN game_name VARCHAR(100)
+       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL`
+  )
+  .catch(() => {
+    // Non-fatal — table may not exist yet in brand new setup.
   });
 
 pool

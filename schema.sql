@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS tournament_entries (
   slot_number INT NOT NULL,
   team_number INT,
   status ENUM('joined', 'playing', 'completed') DEFAULT 'joined',
+  game_name VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

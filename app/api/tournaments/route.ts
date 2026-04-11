@@ -60,7 +60,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const sanitizedGameName = gameName.trim().slice(0, 100);
+  const trimmedGameName = gameName.trim();
+  const sanitizedGameName = Array.from(trimmedGameName).slice(0, 100).join("");
 
   // Get tournament details
   const [tournaments] = await pool.query<RowDataPacket[]>(
