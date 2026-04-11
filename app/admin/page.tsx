@@ -58,6 +58,7 @@ type WalletUser = {
 type TournamentEntry = {
   username: string;
   full_name: string;
+  game_name?: string | null;
   slot_number: number;
   team_number: number | null;
 };
@@ -65,6 +66,7 @@ type TournamentEntry = {
 type ResultRow = {
   username: string;
   fullName: string;
+  gameName: string;
   slotNumber: number;
   teamNumber: number | null;
   kills: number;
@@ -375,6 +377,10 @@ export default function AdminDashboardPage() {
         entries.map((entry) => ({
           username: entry.username,
           fullName: entry.full_name,
+          gameName:
+            String(entry.game_name ?? "").trim() ||
+            String(entry.full_name ?? "").trim() ||
+            entry.username,
           slotNumber: entry.slot_number,
           teamNumber: entry.team_number,
           kills: resultsByUsername.get(entry.username)?.kills ?? 0,
@@ -806,9 +812,9 @@ export default function AdminDashboardPage() {
                   <div key={row.username} className="rounded-2xl border p-4" style={{ borderColor: "var(--border-color)", background: "rgba(255,255,255,0.75)" }}>
                     <div className="flex flex-wrap items-center gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold truncate" style={{ color: "var(--text-primary)" }}>{row.fullName}</div>
+                        <div className="font-bold truncate" style={{ color: "var(--text-primary)" }}>{row.gameName}</div>
                         <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                          @{row.username} • Slot #{row.slotNumber}{row.teamNumber ? ` • Team ${row.teamNumber}` : " • Solo"}
+                          {row.fullName} • @{row.username} • Slot #{row.slotNumber}{row.teamNumber ? ` • Team ${row.teamNumber}` : " • Solo"}
                         </div>
                       </div>
                       <div className="flex items-end gap-4 flex-shrink-0">
