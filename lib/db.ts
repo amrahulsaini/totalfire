@@ -43,6 +43,18 @@ pool
   });
 
 pool
+  .query("ALTER TABLE tournament_entries DROP INDEX unique_entry")
+  .catch(() => {
+    // Non-fatal — index may not exist yet.
+  });
+
+pool
+  .query("ALTER TABLE tournament_entries ADD INDEX idx_entry_user (tournament_id, user_id)")
+  .catch(() => {
+    // Non-fatal — index may already exist.
+  });
+
+pool
   .query(
     `ALTER TABLE withdrawal_requests
      ADD COLUMN IF NOT EXISTS method VARCHAR(30) NULL AFTER amount,

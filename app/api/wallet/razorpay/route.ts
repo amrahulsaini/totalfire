@@ -8,7 +8,14 @@ export async function POST(request: Request) {
 
   const payload = await request.json().catch(() => ({}));
   const amount = Number(payload.amount);
+  const MIN_TOPUP_AMOUNT = 25;
   if (!amount || amount <= 0) return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  if (amount < MIN_TOPUP_AMOUNT) {
+    return NextResponse.json(
+      { error: `Minimum add money amount is INR ${MIN_TOPUP_AMOUNT}` },
+      { status: 400 }
+    );
+  }
 
   try {
     const razorpay = new Razorpay({

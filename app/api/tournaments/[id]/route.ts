@@ -50,11 +50,19 @@ export async function GET(
               te.game_name
        FROM match_results mr
        JOIN users u ON mr.user_id = u.id
-       LEFT JOIN tournament_entries te
-         ON te.tournament_id = mr.tournament_id AND te.user_id = mr.user_id
+       LEFT JOIN (
+         SELECT te1.tournament_id, te1.user_id, te1.game_name
+         FROM tournament_entries te1
+         INNER JOIN (
+           SELECT tournament_id, user_id, MAX(id) AS latest_id
+           FROM tournament_entries
+           WHERE tournament_id = ?
+           GROUP BY tournament_id, user_id
+         ) latest ON latest.latest_id = te1.id
+       ) te ON te.tournament_id = mr.tournament_id AND te.user_id = mr.user_id
        WHERE mr.tournament_id = ?
        ORDER BY mr.is_winner DESC, mr.kills DESC`,
-      [id]
+      [id, id]
     );
     // Assign positions with tie-safe ranking (same is_winner + same kills = same position)
     let pos = 1;
@@ -72,23 +80,31 @@ export async function GET(
 
   // Check if requesting user has joined (if authenticated)
   let userEntry = null;
+  let userEntries: RowDataPacket[] = [];
   const user = await verifyUser(request);
   if (user) {
     const [ue] = await pool.query<RowDataPacket[]>(
-      "SELECT slot_number, team_number, status FROM tournament_entries WHERE tournament_id = ? AND user_id = ?",
+      `SELECT slot_number, team_number, status
+       FROM tournament_entries
+       WHERE tournament_id = ? AND user_id = ?
+       ORDER BY slot_number ASC`,
       [id, user.id]
     );
+    userEntries = ue;
     if (ue.length > 0) userEntry = ue[0];
   }
 
-  // Show room info only 5 minutes before start.
+  // Show room info only to joined users during the reveal window:
+  // 5 minutes before start until 5 minutes after start.
   // start_time is stored as IST string; session timezone is now IST so we compare
   // by querying MySQL for the diff instead of doing JS timezone gymnastics.
-  const [[{ minLeft }]] = await pool.query<RowDataPacket[]>(
-    "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
+  const [[{ minFromStart }]] = await pool.query<RowDataPacket[]>(
+    "SELECT TIMESTAMPDIFF(MINUTE, ?, NOW()) AS minFromStart",
     [tournament.start_time]
   );
-  const showRoom = Number(minLeft) <= 5 && tournament.room_id;
+  const joinedByRequester = userEntries.length > 0;
+  const withinRevealWindow = Number(minFromStart) >= -5 && Number(minFromStart) <= 5;
+  const showRoom = Boolean(tournament.room_id) && joinedByRequester && withinRevealWindow;
 
   return NextResponse.json({
     tournament: {
@@ -100,5 +116,6 @@ export async function GET(
     entries,
     results,
     userEntry,
+    userEntries,
   });
 }

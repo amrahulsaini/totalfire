@@ -41,7 +41,13 @@ export async function GET(request: Request) {
 
   const [tournaments] = await pool.query<RowDataPacket[]>(query, params);
 
-  return NextResponse.json({ tournaments });
+  const safeTournaments = tournaments.map((tournament) => ({
+    ...tournament,
+    room_id: null,
+    room_password: null,
+  }));
+
+  return NextResponse.json({ tournaments: safeTournaments });
 }
 
 // POST /api/tournaments — join a tournament
@@ -51,7 +57,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { tournamentId, preferredSlot, gameName } = await request.json();
+  const payload = await request.json().catch(() => ({}));
+  const tournamentId = Number(payload.tournamentId);
+  const gameName = payload.gameName;
+  const preferredSlot = payload.preferredSlot;
+  const preferredSlotsInput = Array.isArray(payload.preferredSlots)
+    ? payload.preferredSlots
+    : preferredSlot !== undefined && preferredSlot !== null
+      ? [preferredSlot]
+      : [];
 
   if (!tournamentId || !gameName || typeof gameName !== "string" || gameName.trim().length === 0) {
     return NextResponse.json(
@@ -63,157 +77,239 @@ export async function POST(request: Request) {
   const trimmedGameName = gameName.trim();
   const sanitizedGameName = Array.from(trimmedGameName).slice(0, 100).join("");
 
-  // Get tournament details
-  const [tournaments] = await pool.query<RowDataPacket[]>(
-    "SELECT * FROM tournaments WHERE id = ? AND is_active = 1",
-    [tournamentId]
+  const normalizedPreferredSlots: number[] = Array.from(
+    new Set<number>(
+      preferredSlotsInput
+        .map((value: unknown) => Number(value))
+        .filter((value: number) => Number.isInteger(value) && value >= 1)
+    )
   );
 
-  if (tournaments.length === 0) {
-    return NextResponse.json(
-      { error: "Tournament not found" },
-      { status: 404 }
-    );
+  let requestedSeatCount = Number(payload.seatCount);
+  if (!Number.isInteger(requestedSeatCount) || requestedSeatCount <= 0) {
+    requestedSeatCount = Math.max(1, normalizedPreferredSlots.length || 1);
   }
 
-  const tournament = tournaments[0];
+  const connection = await pool.getConnection();
 
-  if (tournament.status !== "upcoming") {
-    return NextResponse.json(
-      { error: "This tournament is no longer accepting entries" },
-      { status: 400 }
+  try {
+    await connection.beginTransaction();
+
+    // Get tournament details
+    const [tournaments] = await connection.query<RowDataPacket[]>(
+      "SELECT * FROM tournaments WHERE id = ? AND is_active = 1 FOR UPDATE",
+      [tournamentId]
     );
-  }
 
-  // Block joining less than 1 minute before start (NOW() is IST, session tz set in db.ts)
-  const [[{ minLeft }]] = await pool.query<RowDataPacket[]>(
-    "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
-    [tournament.start_time]
-  );
-  if (Number(minLeft) < 1) {
-    return NextResponse.json(
-      { error: "Joining closed — match starts in less than 1 minute" },
-      { status: 400 }
-    );
-  }
-
-  // Check if already joined
-  const [existingEntry] = await pool.query<RowDataPacket[]>(
-    "SELECT id FROM tournament_entries WHERE tournament_id = ? AND user_id = ?",
-    [tournamentId, user.id]
-  );
-
-  if (existingEntry.length > 0) {
-    return NextResponse.json(
-      { error: "You have already joined this tournament" },
-      { status: 409 }
-    );
-  }
-
-  // Check current player count
-  const [countResult] = await pool.query<RowDataPacket[]>(
-    "SELECT COUNT(*) as count FROM tournament_entries WHERE tournament_id = ?",
-    [tournamentId]
-  );
-
-  const currentPlayers = countResult[0].count;
-  if (currentPlayers >= tournament.max_players) {
-    return NextResponse.json(
-      { error: "Tournament is full. Please join another match." },
-      { status: 400 }
-    );
-  }
-
-  // Check wallet balance
-  const [wallets] = await pool.query<RowDataPacket[]>(
-    "SELECT balance FROM wallets WHERE user_id = ?",
-    [user.id]
-  );
-
-  const balance = wallets.length > 0 ? Number(wallets[0].balance) : 0;
-  const entryFee = Number(tournament.entry_fee);
-
-  if (balance < entryFee) {
-    return NextResponse.json(
-      {
-        error: "Insufficient wallet balance",
-        required: entryFee,
-        current: balance,
-      },
-      { status: 400 }
-    );
-  }
-
-  // Deduct entry fee from wallet
-  await pool.query(
-    "UPDATE wallets SET balance = balance - ? WHERE user_id = ?",
-    [entryFee, user.id]
-  );
-
-  // Record transaction
-  await pool.query(
-    "INSERT INTO wallet_transactions (user_id, amount, type, description, reference_id) VALUES (?, ?, 'debit', ?, ?)",
-    [
-      user.id,
-      entryFee,
-      `Entry fee for ${tournament.title} (${tournament.match_id})`,
-      tournament.match_id,
-    ]
-  );
-
-  // Assign slot number — use preferred slot if available, otherwise next sequential
-  let slotNumber = currentPlayers + 1;
-  if (preferredSlot && preferredSlot >= 1 && preferredSlot <= tournament.max_players) {
-    // Check if preferred slot is taken
-    const [slotCheck] = await pool.query<RowDataPacket[]>(
-      "SELECT id FROM tournament_entries WHERE tournament_id = ? AND slot_number = ?",
-      [tournamentId, preferredSlot]
-    );
-    if (slotCheck.length === 0) {
-      slotNumber = preferredSlot;
+    if (tournaments.length === 0) {
+      await connection.rollback();
+      return NextResponse.json(
+        { error: "Tournament not found" },
+        { status: 404 }
+      );
     }
-  }
-  const teamNumber =
-    tournament.team_size > 1
-      ? Math.ceil(slotNumber / tournament.team_size)
-      : null;
 
-  // Create entry
-  const [entry] = await pool.query<ResultSetHeader>(
-    "INSERT INTO tournament_entries (tournament_id, user_id, slot_number, team_number, game_name) VALUES (?, ?, ?, ?, ?)",
-    [tournamentId, user.id, slotNumber, teamNumber, sanitizedGameName]
-  );
+    const tournament = tournaments[0];
+    const teamSize = Number(tournament.team_size);
+    requestedSeatCount = teamSize > 1
+      ? Math.min(Math.max(requestedSeatCount, 1), teamSize)
+      : 1;
 
-  // Get updated wallet balance
-  const [updatedWallet] = await pool.query<RowDataPacket[]>(
-    "SELECT balance FROM wallets WHERE user_id = ?",
-    [user.id]
-  );
+    if (tournament.status !== "upcoming") {
+      await connection.rollback();
+      return NextResponse.json(
+        { error: "This tournament is no longer accepting entries" },
+        { status: 400 }
+      );
+    }
 
-  await createUserNotification({
-    userId: user.id,
-    type: "tournament",
-    title: "Tournament Joined",
-    message: `You joined ${tournament.title}. Entry fee INR ${entryFee.toFixed(2)} was deducted from wallet.`,
-    payload: {
-      tournamentId: Number(tournamentId),
-      matchId: String(tournament.match_id),
-      slotNumber,
-      teamNumber,
-      entryFee,
-    },
-  });
+    // Block joining less than 1 minute before start (NOW() is IST, session tz set in db.ts)
+    const [[{ minLeft }]] = await connection.query<RowDataPacket[]>(
+      "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
+      [tournament.start_time]
+    );
+    if (Number(minLeft) < 1) {
+      await connection.rollback();
+      return NextResponse.json(
+        { error: "Joining closed — match starts in less than 1 minute" },
+        { status: 400 }
+      );
+    }
 
-  return NextResponse.json(
-    {
-      message: "Successfully joined tournament!",
-      entry: {
+    // Check if already joined
+    const [existingEntry] = await connection.query<RowDataPacket[]>(
+      "SELECT id FROM tournament_entries WHERE tournament_id = ? AND user_id = ? LIMIT 1",
+      [tournamentId, user.id]
+    );
+
+    if (existingEntry.length > 0) {
+      await connection.rollback();
+      return NextResponse.json(
+        { error: "You have already joined this tournament" },
+        { status: 409 }
+      );
+    }
+
+    // Check current player count
+    const [countResult] = await connection.query<RowDataPacket[]>(
+      "SELECT COUNT(*) as count FROM tournament_entries WHERE tournament_id = ?",
+      [tournamentId]
+    );
+
+    const currentPlayers = Number(countResult[0].count);
+    if (currentPlayers >= Number(tournament.max_players)) {
+      await connection.rollback();
+      return NextResponse.json(
+        { error: "Tournament is full. Please join another match." },
+        { status: 400 }
+      );
+    }
+
+    if (currentPlayers + requestedSeatCount > Number(tournament.max_players)) {
+      await connection.rollback();
+      return NextResponse.json(
+        {
+          error: `Only ${Math.max(Number(tournament.max_players) - currentPlayers, 0)} seat(s) left in this tournament`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Determine available seats and lock preference to open slots.
+    const [takenRows] = await connection.query<RowDataPacket[]>(
+      "SELECT slot_number FROM tournament_entries WHERE tournament_id = ?",
+      [tournamentId]
+    );
+    const takenSlots = new Set<number>(takenRows.map((row) => Number(row.slot_number)));
+    const preferredInRange = normalizedPreferredSlots
+      .filter((slot) => slot <= Number(tournament.max_players));
+    const selectedSlots: number[] = [];
+
+    for (const slot of preferredInRange) {
+      if (selectedSlots.length >= requestedSeatCount) break;
+      if (!takenSlots.has(slot)) {
+        selectedSlots.push(slot);
+        takenSlots.add(slot);
+      }
+    }
+
+    for (let slot = 1; slot <= Number(tournament.max_players); slot += 1) {
+      if (selectedSlots.length >= requestedSeatCount) break;
+      if (!takenSlots.has(slot)) {
+        selectedSlots.push(slot);
+        takenSlots.add(slot);
+      }
+    }
+
+    if (selectedSlots.length < requestedSeatCount) {
+      await connection.rollback();
+      return NextResponse.json(
+        { error: "Not enough seats are available right now" },
+        { status: 400 }
+      );
+    }
+
+    // Check wallet balance
+    const [wallets] = await connection.query<RowDataPacket[]>(
+      "SELECT balance FROM wallets WHERE user_id = ? FOR UPDATE",
+      [user.id]
+    );
+
+    const balance = wallets.length > 0 ? Number(wallets[0].balance) : 0;
+    const entryFee = Number(tournament.entry_fee);
+    const totalEntryFee = entryFee * requestedSeatCount;
+
+    if (balance < totalEntryFee) {
+      await connection.rollback();
+      return NextResponse.json(
+        {
+          error: "Insufficient wallet balance",
+          required: totalEntryFee,
+          current: balance,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Deduct entry fee from wallet
+    await connection.query(
+      "UPDATE wallets SET balance = balance - ? WHERE user_id = ?",
+      [totalEntryFee, user.id]
+    );
+
+    // Record transaction
+    await connection.query(
+      "INSERT INTO wallet_transactions (user_id, amount, type, description, reference_id) VALUES (?, ?, 'debit', ?, ?)",
+      [
+        user.id,
+        totalEntryFee,
+        `Entry fee for ${tournament.title} (${tournament.match_id}) • ${requestedSeatCount} seat(s)`,
+        tournament.match_id,
+      ]
+    );
+
+    const insertedEntries: { id: number; slotNumber: number; teamNumber: number | null }[] = [];
+
+    for (const slotNumber of selectedSlots) {
+      const teamNumber =
+        teamSize > 1
+          ? Math.ceil(slotNumber / teamSize)
+          : null;
+
+      const [entry] = await connection.query<ResultSetHeader>(
+        "INSERT INTO tournament_entries (tournament_id, user_id, slot_number, team_number, game_name) VALUES (?, ?, ?, ?, ?)",
+        [tournamentId, user.id, slotNumber, teamNumber, sanitizedGameName]
+      );
+
+      insertedEntries.push({
         id: entry.insertId,
         slotNumber,
         teamNumber,
+      });
+    }
+
+    // Get updated wallet balance
+    const [updatedWallet] = await connection.query<RowDataPacket[]>(
+      "SELECT balance FROM wallets WHERE user_id = ?",
+      [user.id]
+    );
+
+    await connection.commit();
+
+    await createUserNotification({
+      userId: user.id,
+      type: "tournament",
+      title: "Tournament Joined",
+      message: `You joined ${tournament.title} with ${requestedSeatCount} seat(s). Entry fee INR ${totalEntryFee.toFixed(2)} was deducted from wallet.`,
+      payload: {
+        tournamentId: Number(tournamentId),
+        matchId: String(tournament.match_id),
+        slotNumbers: insertedEntries.map((entry) => entry.slotNumber),
+        teamNumbers: insertedEntries
+          .map((entry) => entry.teamNumber)
+          .filter((teamNumber): teamNumber is number => teamNumber != null),
+        seatCount: requestedSeatCount,
+        entryFee: totalEntryFee,
       },
-      balance: Number(updatedWallet[0].balance),
-    },
-    { status: 201 }
-  );
+    });
+
+    return NextResponse.json(
+      {
+        message: `Successfully joined ${requestedSeatCount} seat(s)!`,
+        entries: insertedEntries,
+        seatCount: requestedSeatCount,
+        balance: Number(updatedWallet[0].balance),
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    await connection.rollback();
+    console.error("Tournament join failed:", error);
+    return NextResponse.json(
+      { error: "Could not complete join request. Please try again." },
+      { status: 500 }
+    );
+  } finally {
+    connection.release();
+  }
 }

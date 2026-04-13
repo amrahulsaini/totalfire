@@ -252,6 +252,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _showMessage('Enter a valid amount to add.', isError: true);
       return;
     }
+    if (amount < 25) {
+      _showMessage('Minimum add money amount is ₹25.', isError: true);
+      return;
+    }
 
     setState(() => _isWalletBusy = true);
     final response = await ApiService.createWalletTopUp(amount);
@@ -828,6 +832,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   decoration: const InputDecoration(
                     labelText: 'Add amount',
                     prefixIcon: Icon(Icons.currency_rupee),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Minimum add money amount: ₹25',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1455,7 +1468,10 @@ class _MyTournamentCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _MiniPill(label: 'Slot ${tournament.slotNumber ?? '-'}'),
+                if (tournament.seatsBooked > 1)
+                  _MiniPill(label: 'Seats ${tournament.slotNumbers ?? tournament.seatsBooked}'),
+                if (tournament.seatsBooked <= 1)
+                  _MiniPill(label: 'Slot ${tournament.slotNumber ?? '-'}'),
                 _MiniPill(
                   label: tournament.teamNumber == null
                       ? 'Solo'
@@ -1503,7 +1519,7 @@ class _MyTournamentCard extends StatelessWidget {
                 child: Text(
                   roomVisible
                       ? 'Room ${tournament.roomId} • Pass ${tournament.roomPassword ?? '-'}\nDo not share room details. Sharing can get your account banned or blocked from using the app.'
-                      : 'Room ID unlocks 5 minutes before start',
+                      : 'Room unlocks only for joined players from 5 minutes before start until 5 minutes after start',
                   style: TextStyle(
                     color: roomVisible ? const Color(0xFF9A3412) : AppColors.textSecondary,
                     fontWeight: FontWeight.w700,

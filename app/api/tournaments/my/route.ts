@@ -22,7 +22,13 @@ export async function GET(request: Request) {
   );
 
   let query = `
-    SELECT t.*, te.slot_number, te.team_number, te.status as entry_status,
+    SELECT
+      t.*,
+      MIN(te.slot_number) AS slot_number,
+      MIN(te.team_number) AS team_number,
+      MAX(te.status) AS entry_status,
+      COUNT(te.id) AS seats_booked,
+      GROUP_CONCAT(te.slot_number ORDER BY te.slot_number ASC) AS slot_numbers,
     (SELECT COUNT(*) FROM tournament_entries WHERE tournament_id = t.id) as current_players
     FROM tournaments t
     JOIN tournament_entries te ON t.id = te.tournament_id
@@ -35,19 +41,20 @@ export async function GET(request: Request) {
     params.push(status);
   }
 
+  query += " GROUP BY t.id";
   query += " ORDER BY t.start_time ASC";
 
   const [tournaments] = await pool.query<RowDataPacket[]>(query, params);
 
-  // Add room info only for tournaments within 5 minutes of start
+  // Add room info only in the reveal window: 5 minutes before start to 5 minutes after.
   // NOW() returns IST since session timezone is set to +05:30 in db.ts
   const enriched = await Promise.all(
     tournaments.map(async (t) => {
-      const [[{ minLeft }]] = await pool.query<RowDataPacket[]>(
-        "SELECT TIMESTAMPDIFF(MINUTE, NOW(), ?) AS minLeft",
+      const [[{ minFromStart }]] = await pool.query<RowDataPacket[]>(
+        "SELECT TIMESTAMPDIFF(MINUTE, ?, NOW()) AS minFromStart",
         [t.start_time]
       );
-      const showRoom = Number(minLeft) <= 5 && t.room_id;
+      const showRoom = Number(minFromStart) >= -5 && Number(minFromStart) <= 5 && t.room_id;
       return {
         ...t,
         room_id: showRoom ? t.room_id : null,

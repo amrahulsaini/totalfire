@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
@@ -22,7 +23,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
   TournamentDetail? _detail;
   bool _isLoading = true;
   bool _isJoining = false;
-  int? _selectedSlot;
+  final Set<int> _selectedSlots = <int>{};
   Timer? _autoRefreshTimer;
   String? _currentUsername;
 
@@ -63,7 +64,18 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
         return;
       }
 
-      setState(() => _detail = detail);
+      final takenSlots = detail.entries.map((entry) => entry.slotNumber).toSet();
+      final myBookedSlots = detail.userEntries.map((entry) => entry.slotNumber).toSet();
+
+      setState(() {
+        _detail = detail;
+        _selectedSlots.removeWhere(
+          (slot) => takenSlots.contains(slot) || myBookedSlots.contains(slot),
+        );
+        if (detail.userEntries.isNotEmpty) {
+          _selectedSlots.clear();
+        }
+      });
     } catch (error) {
       if (!mounted) {
         return;
@@ -82,9 +94,67 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     }
   }
 
+  int _seatSelectionLimit(TournamentSummary tournament) {
+    return tournament.teamSize > 1 ? tournament.teamSize : 1;
+  }
+
+  void _toggleSelectedSlot(int slot) {
+    final detail = _detail;
+    if (detail == null) return;
+
+    final limit = _seatSelectionLimit(detail.tournament);
+    var exceededLimit = false;
+
+    setState(() {
+      if (_selectedSlots.contains(slot)) {
+        _selectedSlots.remove(slot);
+        return;
+      }
+
+      if (_selectedSlots.length >= limit) {
+        exceededLimit = true;
+        return;
+      }
+
+      _selectedSlots.add(slot);
+    });
+
+    if (exceededLimit) {
+      _showMessage(
+        'You can select up to $limit seats in this mode.',
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _copyCredential(String label, String value) async {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return;
+
+    await Clipboard.setData(ClipboardData(text: trimmed));
+    if (!mounted) return;
+    _showMessage('$label copied');
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppColors.accentRed : AppColors.accentGreen,
+      ),
+    );
+  }
+
   Future<void> _handleJoin() async {
     final detail = _detail;
     if (detail == null) return;
+    if (_selectedSlots.isEmpty) {
+      _showMessage('Select at least one seat to join.', isError: true);
+      return;
+    }
+
+    final selectedSlots = _selectedSlots.toList()..sort();
+    final seatCount = selectedSlots.length;
 
     // Fetch wallet balance so we can show it in the confirm dialog.
     double walletBalance = 0;
@@ -100,6 +170,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
       builder: (ctx) => _GameNameDialog(
         entryFee: detail.tournament.entryFee,
         walletBalance: walletBalance,
+        seatCount: seatCount,
       ),
     );
 
@@ -110,7 +181,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     final response = await ApiService.joinTournament(
       detail.tournament.id,
       gameName: gameName,
-      preferredSlot: _selectedSlot,
+      preferredSlots: selectedSlots,
     );
     if (!mounted) return;
 
@@ -123,6 +194,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     );
 
     if (response.success) {
+      setState(() => _selectedSlots.clear());
       await _loadDetail();
     }
   }
@@ -145,19 +217,21 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                     children: [
                       _SummaryCard(tournament: detail.tournament),
                       const SizedBox(height: 16),
-                      if (detail.userEntry != null) ...[
+                      if (detail.userEntries.isNotEmpty) ...[
                         _SectionCard(
-                          title: tx('Your Slot'),
-                          child: Row(
-                            children: [
-                              _SlotBadge(label: 'Slot #${detail.userEntry!.slotNumber}'),
-                              const SizedBox(width: 10),
-                              _SlotBadge(
-                                label: detail.userEntry!.teamNumber == null
-                                    ? 'Solo'
-                                    : 'Team ${detail.userEntry!.teamNumber}',
-                              ),
-                            ],
+                          title: detail.userEntries.length > 1 ? 'Your Seats' : tx('Your Slot'),
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: detail.userEntries
+                                .map(
+                                  (entry) => _SlotBadge(
+                                    label: entry.teamNumber == null
+                                        ? 'Slot #${entry.slotNumber} • Solo'
+                                        : 'Slot #${entry.slotNumber} • Team ${entry.teamNumber}',
+                                  ),
+                                )
+                                .toList(),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -174,7 +248,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                         ),
                         child: detail.tournament.roomId == null
                             ? Text(
-                              tx('Room ID and password unlock 5 minutes before match start.'),
+                              'Room ID and password are visible only to joined players from 5 minutes before start until 5 minutes after start.',
                               style: const TextStyle(color: AppColors.textSecondary, height: 1.6),
                               )
                             : Column(
@@ -211,11 +285,13 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                                   _RoomLine(
                                     label: tx('Room ID'),
                                     value: detail.tournament.roomId ?? '-',
+                                    onCopy: () => _copyCredential('Room ID', detail.tournament.roomId ?? ''),
                                   ),
                                   const SizedBox(height: 10),
                                   _RoomLine(
                                     label: 'Password',
                                     value: detail.tournament.roomPassword ?? '-',
+                                    onCopy: () => _copyCredential('Password', detail.tournament.roomPassword ?? ''),
                                   ),
                                 ],
                               ),
@@ -224,20 +300,32 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                       _SeatPicker(
                         tournament: detail.tournament,
                         entries: detail.entries,
-                        userEntry: detail.userEntry,
-                        selectedSlot: _selectedSlot,
-                        onSlotSelected: detail.userEntry == null && detail.tournament.status == 'upcoming'
-                            ? (slot) => setState(() => _selectedSlot = slot)
+                        userSlots: detail.userEntries.map((entry) => entry.slotNumber).toSet(),
+                        selectedSlots: _selectedSlots,
+                        maxSelectableSeats: _seatSelectionLimit(detail.tournament),
+                        onSlotSelected: detail.userEntries.isEmpty && detail.tournament.status == 'upcoming'
+                            ? _toggleSelectedSlot
                             : null,
                       ),
                       const SizedBox(height: 16),
-                      if (detail.tournament.status == 'upcoming' && detail.userEntry == null) ...[
+                      if (detail.tournament.status == 'upcoming' && detail.userEntries.isEmpty) ...[
+                        if (detail.tournament.teamSize > 1)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'You can book up to ${detail.tournament.teamSize} seats in this mode.',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         SizedBox(
                           height: 54,
                           child: ElevatedButton(
-                            onPressed: detail.tournament.isFull || _isJoining || _selectedSlot == null ? null : _handleJoin,
+                            onPressed: detail.tournament.isFull || _isJoining || _selectedSlots.isEmpty ? null : _handleJoin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: detail.tournament.isFull || _selectedSlot == null
+                              backgroundColor: detail.tournament.isFull || _selectedSlots.isEmpty
                                   ? AppColors.textMuted
                                   : AppColors.accentRed,
                             ),
@@ -253,9 +341,11 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                                 : Text(
                                     detail.tournament.isFull
                                         ? 'Tournament Full'
-                                        : _selectedSlot == null
-                                            ? 'Select a Seat to Join'
-                                            : 'Join Seat #$_selectedSlot',
+                                    : _selectedSlots.isEmpty
+                                      ? 'Select Seat(s) to Join'
+                                      : _selectedSlots.length == 1
+                                        ? 'Join Seat #${_selectedSlots.first}'
+                                        : 'Join ${_selectedSlots.length} Seats',
                                   ),
                           ),
                         ),
@@ -450,10 +540,12 @@ class _RoomLine extends StatelessWidget {
   const _RoomLine({
     required this.label,
     required this.value,
+    this.onCopy,
   });
 
   final String label;
   final String value;
+  final VoidCallback? onCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -466,20 +558,41 @@ class _RoomLine extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w900,
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
+          if (onCopy != null) ...[
+            const SizedBox(width: 10),
+            InkWell(
+              onTap: onCopy,
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(
+                  Icons.copy_rounded,
+                  size: 18,
+                  color: AppColors.accentBlue,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -750,15 +863,17 @@ class _SeatPicker extends StatelessWidget {
   const _SeatPicker({
     required this.tournament,
     required this.entries,
-    required this.userEntry,
-    required this.selectedSlot,
+    required this.userSlots,
+    required this.selectedSlots,
+    required this.maxSelectableSeats,
     required this.onSlotSelected,
   });
 
   final TournamentSummary tournament;
   final List<TournamentEntry> entries;
-  final UserTournamentEntry? userEntry;
-  final int? selectedSlot;
+  final Set<int> userSlots;
+  final Set<int> selectedSlots;
+  final int maxSelectableSeats;
   final void Function(int slot)? onSlotSelected;
 
   @override
@@ -813,8 +928,8 @@ class _SeatPicker extends StatelessWidget {
             _SoloGrid(
               maxPlayers: maxPlayers,
               takenMap: takenMap,
-              userSlot: userEntry?.slotNumber,
-              selectedSlot: selectedSlot,
+              userSlots: userSlots,
+              selectedSlots: selectedSlots,
               onSlotSelected: onSlotSelected,
             )
           else
@@ -822,13 +937,13 @@ class _SeatPicker extends StatelessWidget {
               maxPlayers: maxPlayers,
               teamSize: teamSize,
               takenMap: takenMap,
-              userSlot: userEntry?.slotNumber,
-              selectedSlot: selectedSlot,
+              userSlots: userSlots,
+              selectedSlots: selectedSlots,
               onSlotSelected: onSlotSelected,
             ),
           const SizedBox(height: 14),
           Text(
-            '${entries.length}/$maxPlayers seats filled',
+            '${entries.length}/$maxPlayers seats filled • Select up to $maxSelectableSeats',
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -844,15 +959,15 @@ class _SoloGrid extends StatelessWidget {
   const _SoloGrid({
     required this.maxPlayers,
     required this.takenMap,
-    required this.userSlot,
-    required this.selectedSlot,
+    required this.userSlots,
+    required this.selectedSlots,
     required this.onSlotSelected,
   });
 
   final int maxPlayers;
   final Map<int, String> takenMap;
-  final int? userSlot;
-  final int? selectedSlot;
+  final Set<int> userSlots;
+  final Set<int> selectedSlots;
   final void Function(int)? onSlotSelected;
 
   @override
@@ -876,11 +991,11 @@ class _SoloGrid extends StatelessWidget {
                     slot: slot,
                     isTaken: takenMap.containsKey(slot),
                     takenBy: takenMap[slot],
-                    isYours: userSlot == slot,
-                    isSelected: selectedSlot == slot,
+                      isYours: userSlots.contains(slot),
+                      isSelected: selectedSlots.contains(slot),
                     onTap: onSlotSelected != null &&
-                            !takenMap.containsKey(slot) &&
-                            userSlot == null
+                        !takenMap.containsKey(slot) &&
+                        !userSlots.contains(slot)
                         ? () => onSlotSelected!(slot)
                         : null,
                   ),
@@ -899,16 +1014,16 @@ class _TeamGrid extends StatelessWidget {
     required this.maxPlayers,
     required this.teamSize,
     required this.takenMap,
-    required this.userSlot,
-    required this.selectedSlot,
+    required this.userSlots,
+    required this.selectedSlots,
     required this.onSlotSelected,
   });
 
   final int maxPlayers;
   final int teamSize;
   final Map<int, String> takenMap;
-  final int? userSlot;
-  final int? selectedSlot;
+  final Set<int> userSlots;
+  final Set<int> selectedSlots;
   final void Function(int)? onSlotSelected;
 
   @override
@@ -951,11 +1066,11 @@ class _TeamGrid extends StatelessWidget {
                       slot: slot,
                       isTaken: takenMap.containsKey(slot),
                       takenBy: takenMap[slot],
-                      isYours: userSlot == slot,
-                      isSelected: selectedSlot == slot,
+                          isYours: userSlots.contains(slot),
+                          isSelected: selectedSlots.contains(slot),
                       onTap: onSlotSelected != null &&
                               !takenMap.containsKey(slot) &&
-                              userSlot == null
+                            !userSlots.contains(slot)
                           ? () => onSlotSelected!(slot)
                           : null,
                     ),
@@ -1123,10 +1238,12 @@ class _GameNameDialog extends StatefulWidget {
   const _GameNameDialog({
     required this.entryFee,
     required this.walletBalance,
+    required this.seatCount,
   });
 
   final double entryFee;
   final double walletBalance;
+  final int seatCount;
 
   @override
   State<_GameNameDialog> createState() => _GameNameDialogState();
@@ -1143,7 +1260,7 @@ class _GameNameDialogState extends State<_GameNameDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final fee = widget.entryFee;
+    final fee = widget.entryFee * widget.seatCount;
     final balance = widget.walletBalance;
     final afterBalance = balance - fee;
     final canAfford = balance >= fee;
@@ -1161,6 +1278,16 @@ class _GameNameDialogState extends State<_GameNameDialog> {
           const Text(
             'This is the name you use inside the game.\nEmojis & special characters are allowed.',
             style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.seatCount > 1
+                ? 'You selected ${widget.seatCount} seats.'
+                : 'You selected 1 seat.',
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 14),
           TextField(
@@ -1191,7 +1318,7 @@ class _GameNameDialogState extends State<_GameNameDialog> {
             child: Column(
               children: [
                 _FeeLine(
-                  label: 'Entry fee',
+                  label: widget.seatCount > 1 ? 'Entry fee total' : 'Entry fee',
                   value: '− ₹${fee % 1 == 0 ? fee.toStringAsFixed(0) : fee.toStringAsFixed(2)}',
                   valueColor: AppColors.accentRed,
                 ),

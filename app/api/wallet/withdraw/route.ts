@@ -19,8 +19,15 @@ export async function POST(request: Request) {
   const payload = await request.json().catch(() => ({}));
   const amount = Number(payload.amount);
   const upiId = normalizeUpiId(payload.upiId ?? payload.accountDetails);
+  const MIN_WITHDRAW_AMOUNT = 75;
 
   if (!amount || amount <= 0) return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  if (amount < MIN_WITHDRAW_AMOUNT) {
+    return NextResponse.json(
+      { error: `Minimum withdrawal amount is INR ${MIN_WITHDRAW_AMOUNT}` },
+      { status: 400 }
+    );
+  }
   if (!isValidUpiId(upiId)) {
     return NextResponse.json({ error: "Valid UPI ID is required" }, { status: 400 });
   }

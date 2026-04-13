@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS tournament_entries (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_entry (tournament_id, user_id),
+  KEY idx_entry_user (tournament_id, user_id),
   UNIQUE KEY unique_slot (tournament_id, slot_number)
 );
 

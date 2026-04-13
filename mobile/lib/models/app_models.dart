@@ -132,6 +132,8 @@ class TournamentSummary {
     required this.slotNumber,
     required this.teamNumber,
     required this.entryStatus,
+    required this.seatsBooked,
+    required this.slotNumbers,
   });
 
   final int id;
@@ -155,6 +157,8 @@ class TournamentSummary {
   final int? slotNumber;
   final int? teamNumber;
   final String? entryStatus;
+  final int seatsBooked;
+  final String? slotNumbers;
 
   bool get isFull => currentPlayers >= maxPlayers;
 
@@ -181,6 +185,8 @@ class TournamentSummary {
       slotNumber: _nullableIntValue(json['slot_number']),
       teamNumber: _nullableIntValue(json['team_number']),
       entryStatus: _nullableStringValue(json['entry_status']),
+      seatsBooked: _intValue(json['seats_booked'] ?? 1),
+      slotNumbers: _nullableStringValue(json['slot_numbers']),
     );
   }
 }
@@ -272,17 +278,28 @@ class TournamentDetail {
     required this.entries,
     required this.results,
     required this.userEntry,
+    required this.userEntries,
   });
 
   final TournamentSummary tournament;
   final List<TournamentEntry> entries;
   final List<MatchResultItem> results;
   final UserTournamentEntry? userEntry;
+  final List<UserTournamentEntry> userEntries;
 
   factory TournamentDetail.fromJson(Map<String, dynamic> json) {
     final entryList = json['entries'] as List<dynamic>? ?? const [];
     final resultList = json['results'] as List<dynamic>? ?? const [];
     final userEntry = json['userEntry'];
+    final userEntriesRaw = json['userEntries'] as List<dynamic>? ?? const [];
+    final userEntries = userEntriesRaw
+        .whereType<Map<String, dynamic>>()
+        .map(UserTournamentEntry.fromJson)
+        .toList();
+
+    final fallbackEntry = userEntry is Map<String, dynamic>
+        ? UserTournamentEntry.fromJson(userEntry)
+        : null;
 
     return TournamentDetail(
       tournament: TournamentSummary.fromJson(
@@ -296,9 +313,8 @@ class TournamentDetail {
           .whereType<Map<String, dynamic>>()
           .map(MatchResultItem.fromJson)
           .toList(),
-      userEntry: userEntry is Map<String, dynamic>
-          ? UserTournamentEntry.fromJson(userEntry)
-          : null,
+      userEntries: userEntries,
+      userEntry: userEntries.isNotEmpty ? userEntries.first : fallbackEntry,
     );
   }
 }

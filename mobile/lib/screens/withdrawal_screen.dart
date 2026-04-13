@@ -71,6 +71,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       _showMessage('Enter a valid withdrawal amount.', isError: true);
       return;
     }
+    if (amount < 75) {
+      _showMessage('Minimum withdrawal amount is ₹75.', isError: true);
+      return;
+    }
 
     final upiPattern = RegExp(r'^[a-zA-Z0-9._-]{2,}@[a-zA-Z]{2,}$');
     if (!upiPattern.hasMatch(upiId)) {
@@ -176,6 +180,15 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Withdraw amount',
                             prefixIcon: Icon(Icons.currency_rupee),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Minimum withdrawal amount: ₹75',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 10),

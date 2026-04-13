@@ -425,8 +425,20 @@ class ApiService {
         .toList();
   }
 
-  static Future<ApiResponse> joinTournament(int tournamentId, {int? preferredSlot, required String gameName}) async {
+  static Future<ApiResponse> joinTournament(
+    int tournamentId, {
+    int? preferredSlot,
+    List<int>? preferredSlots,
+    required String gameName,
+  }) async {
     try {
+      final normalizedPreferredSlots = (preferredSlots ??
+              (preferredSlot != null ? [preferredSlot] : const <int>[]))
+          .where((slot) => slot > 0)
+          .toSet()
+          .toList()
+        ..sort();
+
       final result = await _request(
         'POST',
         '/api/tournaments',
@@ -434,6 +446,10 @@ class ApiService {
           'tournamentId': tournamentId,
           'gameName': gameName,
           'preferredSlot': preferredSlot,
+          'preferredSlots': normalizedPreferredSlots,
+          'seatCount': normalizedPreferredSlots.isEmpty
+              ? 1
+              : normalizedPreferredSlots.length,
         },
       );
 
