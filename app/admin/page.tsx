@@ -67,8 +67,8 @@ type ResultRow = {
   username: string;
   fullName: string;
   gameName: string;
-  slotNumber: number;
-  teamNumber: number | null;
+  seatCount: number;
+  slotSummary: string;
   kills: number;
   isWinner: boolean;
 };
@@ -373,19 +373,51 @@ export default function AdminDashboardPage() {
         ])
       );
 
+      const groupedEntries = new Map<string, TournamentEntry[]>();
+      for (const entry of entries) {
+        const existing = groupedEntries.get(entry.username) ?? [];
+        existing.push(entry);
+        groupedEntries.set(entry.username, existing);
+      }
+
       setResultRows(
-        entries.map((entry) => {
-          const rawGameName = entry.game_name == null ? "" : String(entry.game_name);
-          const fallbackName = String(entry.full_name ?? "").trim() || entry.username;
+        Array.from(groupedEntries.entries()).map(([username, grouped]) => {
+          const primary = grouped[0];
+          const rawGameName = grouped
+            .map((entry) => String(entry.game_name ?? ""))
+            .find((name) => name.trim().length > 0) ?? "";
+          const fallbackName = String(primary.full_name ?? "").trim() || username;
+          const orderedSlots = grouped
+            .map((entry) => Number(entry.slot_number))
+            .sort((a, b) => a - b);
+
+          const uniqueTeams = Array.from(
+            new Set(
+              grouped
+                .map((entry) => entry.team_number)
+                .filter((teamNumber): teamNumber is number => typeof teamNumber === "number")
+            )
+          );
+
+          const slotSummary =
+            orderedSlots.length <= 1
+              ? `Slot #${orderedSlots[0] ?? "-"}${uniqueTeams.length === 1 ? ` • Team ${uniqueTeams[0]}` : " • Solo"}`
+              : `Slots #${orderedSlots.join(", ")}${
+                  uniqueTeams.length === 1
+                    ? ` • Team ${uniqueTeams[0]}`
+                    : uniqueTeams.length > 1
+                      ? ` • Teams ${uniqueTeams.join(", ")}`
+                      : " • Solo"
+                }`;
 
           return {
-            username: entry.username,
-            fullName: entry.full_name,
+            username,
+            fullName: primary.full_name,
             gameName: rawGameName.trim().length > 0 ? rawGameName : fallbackName,
-            slotNumber: entry.slot_number,
-            teamNumber: entry.team_number,
-            kills: resultsByUsername.get(entry.username)?.kills ?? 0,
-            isWinner: Boolean(resultsByUsername.get(entry.username)?.is_winner),
+            seatCount: grouped.length,
+            slotSummary,
+            kills: resultsByUsername.get(username)?.kills ?? 0,
+            isWinner: Boolean(resultsByUsername.get(username)?.is_winner),
           };
         })
       );
@@ -824,7 +856,7 @@ export default function AdminDashboardPage() {
                           {`🎮 ${row.gameName}`}
                         </div>
                         <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                          {row.fullName} • @{row.username} • Slot #{row.slotNumber}{row.teamNumber ? ` • Team ${row.teamNumber}` : " • Solo"}
+                          {row.fullName} • @{row.username} • {row.slotSummary}{row.seatCount > 1 ? ` • ${row.seatCount} seats` : ""}
                         </div>
                       </div>
                       <div className="flex items-end gap-4 flex-shrink-0">
