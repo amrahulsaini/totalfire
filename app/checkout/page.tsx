@@ -71,7 +71,7 @@ export default function CheckoutPage() {
               <h2 className="text-2xl font-black text-gray-900 mb-6">Payment Method</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition-colors bg-gray-50 text-gray-900 font-medium">
-                  <input type="radio" className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300" defaultChecked /> Razorpay UPI
+                  <input type="radio" className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300" defaultChecked /> Cashfree UPI
                 </label>
                 <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-500 transition-colors bg-gray-50 text-gray-900 font-medium">
                   <input type="radio" className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300" /> Debit / Credit Card
@@ -84,7 +84,7 @@ export default function CheckoutPage() {
                 </label>
               </div>
               <p className="text-sm text-gray-600">
-                Payments are collected through Razorpay checkout with encrypted transaction processing.
+                Payments are collected through Cashfree checkout with encrypted transaction processing.
               </p>
             </article>
 
