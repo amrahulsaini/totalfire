@@ -16,6 +16,7 @@ interface AppStats {
 
 const MIN_ACTIVE_USERS = 3000;
 const MIN_DOWNLOADS = 10000;
+const WEBSITE_APK_FILE_NAME = "totalfire-v1.0.2.apk";
 
 export default function HeroSection({ basePath = "" }: HeroSectionProps) {
   const [stats, setStats] = useState<AppStats>({
@@ -111,15 +112,15 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
           {/* CTA Buttons */}
           <div className="animate-fade-in-up stagger-4 flex flex-col sm:flex-row gap-4 mt-10">
             <Link
-              href="/downloads/totalfire-latest.apk"
+              href={`/downloads/${WEBSITE_APK_FILE_NAME}`}
               className="fire-btn text-lg !py-4 !px-10"
-              download="totalfire-latest.apk"
+              download={WEBSITE_APK_FILE_NAME}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l-4-4m4 4l4-4" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
               </svg>
-              Download APK
+              Download APK v1.0.2
             </Link>
             <Link href={portalHref("/modes")} className="outline-btn text-lg !py-4 !px-10">
               Browse Tournaments

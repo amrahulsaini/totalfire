@@ -47,7 +47,7 @@ export default function MainPortalPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
+            {[ 
               {
                 step: "01",
                 title: "Choose a Mode",

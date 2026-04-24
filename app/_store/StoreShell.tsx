@@ -143,7 +143,7 @@ export default function StoreShell({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-6 sm:px-12 mt-12 pt-8 border-t border-gray-200 text-xs text-gray-500 flex flex-col md:flex-row justify-between items-center gap-4">
           <span>&copy; {new Date().getFullYear()} TotalFire.in. All rights reserved.</span>
           <div className="flex gap-6">
-            <span>Secure Payments via SpacePay/Razorpay</span>
+            <span>Secure Payments via Cashfree</span>
             <span>GST-ready invoicing enabled</span>
           </div>
         </div>

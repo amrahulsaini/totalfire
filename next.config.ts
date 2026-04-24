@@ -3,11 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
-      {
-        source: "/",
-        destination: "/main",
-        permanent: false,
-      },
+      // Removed redirect from / to /main to keep store at homepage
       {
         source: "/about",
         destination: "/main/about",

@@ -17,13 +17,35 @@ type UpdateSettings = {
   downloadUrl: string;
 };
 
+function buildVersionedApkFileName(version: string) {
+  const normalized = version.trim();
+  return /^\d+(\.\d+){1,3}$/.test(normalized)
+    ? `totalfire-v${normalized}.apk`
+    : "";
+}
+
+function buildVersionedApkUrl(version: string) {
+  const fileName = buildVersionedApkFileName(version);
+  return fileName ? `https://totalfire.in/downloads/${fileName}` : "";
+}
+
+function getFileNameFromUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1] ?? "";
+  } catch {
+    return "";
+  }
+}
+
 const DEFAULT_SETTINGS: UpdateSettings = {
-  latestVersion: "1.0.0",
-  minSupportedVersion: "1.0.0",
+  latestVersion: "1.0.2",
+  minSupportedVersion: "1.0.2",
   forceUpdate: false,
   title: "Update Required",
   message: "A new version of TotalFire is available. Please update to continue.",
-  downloadUrl: "https://totalfire.in/downloads/totalfire-latest.apk",
+  downloadUrl: "https://totalfire.in/downloads/totalfire-v1.0.2.apk",
 };
 
 export default function AdminAppUpdatePage() {
@@ -32,6 +54,10 @@ export default function AdminAppUpdatePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [banner, setBanner] = useState<Banner | null>(null);
   const [form, setForm] = useState<UpdateSettings>(DEFAULT_SETTINGS);
+
+  const suggestedDownloadUrl = buildVersionedApkUrl(form.latestVersion);
+  const suggestedDownloadFileName = buildVersionedApkFileName(form.latestVersion);
+  const currentDownloadFileName = getFileNameFromUrl(form.downloadUrl);
 
   useEffect(() => {
     const storedToken = window.localStorage.getItem("adminToken") ?? "";
@@ -257,9 +283,35 @@ export default function AdminAppUpdatePage() {
                   className="admin-input"
                   value={form.downloadUrl}
                   onChange={(event) => setForm((current) => ({ ...current, downloadUrl: event.target.value }))}
-                  placeholder="https://totalfire.in/downloads/totalfire-latest.apk"
+                  placeholder="https://totalfire.in/downloads/totalfire-v1.0.2.apk"
                 />
               </label>
+
+              <div className="rounded-xl border p-4" style={{ borderColor: "var(--border-color)" }}>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-secondary)" }}>
+                  APK Naming Info
+                </p>
+                <p className="mt-2 text-sm" style={{ color: "var(--text-primary)" }}>
+                  Current website APK file: <strong>{currentDownloadFileName || "Not detected"}</strong>
+                </p>
+                <p className="mt-1 text-sm" style={{ color: "var(--text-primary)" }}>
+                  Suggested for latest version: <strong>{suggestedDownloadFileName || "Enter valid latest version"}</strong>
+                </p>
+                {suggestedDownloadUrl ? (
+                  <button
+                    type="button"
+                    className="outline-btn !mt-3 !px-4 !py-2 !text-sm"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        downloadUrl: suggestedDownloadUrl,
+                      }))
+                    }
+                  >
+                    Use Suggested Versioned URL
+                  </button>
+                ) : null}
+              </div>
 
               <div className="rounded-xl border p-4" style={{ borderColor: "var(--border-color)" }}>
                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-secondary)" }}>
@@ -268,6 +320,7 @@ export default function AdminAppUpdatePage() {
                 <ul className="mt-2 space-y-1 text-sm" style={{ color: "var(--text-primary)" }}>
                   <li>Latest version: {form.latestVersion}</li>
                   <li>Minimum supported: {form.minSupportedVersion}</li>
+                  <li>APK file shown to users: {currentDownloadFileName || "Not detected"}</li>
                   <li>
                     Policy mode: {form.forceUpdate ? "Strict (block below latest)" : "Flexible (block below minimum supported)"}
                   </li>

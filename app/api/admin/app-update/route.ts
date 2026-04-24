@@ -20,7 +20,7 @@ function normalizeRow(row: UpdateRow) {
     forceUpdate: Number(row.force_update ?? 0) === 1,
     title: String(row.title ?? "Update Required"),
     message: String(row.message ?? "A new version is available."),
-    downloadUrl: String(row.download_url ?? "https://totalfire.in/downloads/totalfire-latest.apk"),
+    downloadUrl: String(row.download_url ?? "https://totalfire.in/downloads/totalfire-v1.0.2.apk"),
   };
 }
 
@@ -41,12 +41,12 @@ async function getSettingsRow() {
       id, latest_version, min_supported_version, force_update, title, message, download_url
     ) VALUES (
       1,
-      '1.0.0',
-      '1.0.0',
+      '1.0.2',
+      '1.0.2',
       0,
       'Update Required',
       'A new version of TotalFire is available. Please update to continue.',
-      'https://totalfire.in/downloads/totalfire-latest.apk'
+      'https://totalfire.in/downloads/totalfire-v1.0.2.apk'
     )
     ON DUPLICATE KEY UPDATE id = id`
   );
