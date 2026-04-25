@@ -5,8 +5,8 @@ import { Cashfree } from "cashfree-pg";
 Cashfree.XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
 Cashfree.XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION" 
-  ? Cashfree.Environment.PRODUCTION 
-  : Cashfree.Environment.SANDBOX;
+  ? Cashfree.CFEnvironment.PRODUCTION 
+  : Cashfree.CFEnvironment.SANDBOX;
 
 export async function POST(request: Request) {
   const user = await verifyUser(request);
