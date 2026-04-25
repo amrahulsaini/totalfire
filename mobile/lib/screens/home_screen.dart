@@ -1,16 +1,13 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cferrorresponse/cferrorresponse.dart';
-import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfdropcheckoutpayment.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfwebcheckoutpayment.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cftheme/cftheme.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
-import 'package:flutter_cashfree_pg_sdk/api/cfpaymentcomponents/cfpaymentcomponent.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
@@ -51,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isWalletBusy = false;
   String? _pendingWalletOrderId;
+  bool _shouldAutoVerifyPendingWalletOrder = false;
   String _appVersionLabel = '';
 
   @override
@@ -74,6 +72,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       unawaited(PushService.syncTokenWithBackend());
       unawaited(_refreshNotificationsCount());
+
+      final pendingOrderId = _pendingWalletOrderId?.trim() ?? '';
+      if (_shouldAutoVerifyPendingWalletOrder &&
+          pendingOrderId.isNotEmpty &&
+          !_isWalletBusy) {
+        _shouldAutoVerifyPendingWalletOrder = false;
+        unawaited(_settleWalletOrder(
+          pendingOrderId,
+          pendingMessage:
+              'Checking your Cashfree payment status. If money was debited, wallet credit will appear automatically.',
+          silentPending: true,
+        ));
+      }
     }
   }
 
@@ -203,20 +214,68 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _handlePaymentSuccess(String orderId) async {
-    final paymentId = '';
-    final signature = '';
-
+  Future<void> _handlePaymentSuccess(String orderId) async {
     if (orderId.isEmpty) {
       _showMessage('Payment data missing. Please contact support.', isError: true);
       return;
     }
 
-    setState(() => _isWalletBusy = true);
+    _shouldAutoVerifyPendingWalletOrder = false;
+    await _settleWalletOrder(orderId);
+  }
+
+  String _buildCashfreeErrorMessage(CFErrorResponse response) {
+    final message = response.getMessage()?.trim() ?? '';
+    final code = response.getCode()?.trim() ?? '';
+    final status = response.getStatus()?.trim() ?? '';
+
+    final parts = <String>[
+      if (message.isNotEmpty) message,
+      if (code.isNotEmpty) 'Code: $code',
+      if (status.isNotEmpty) 'Status: $status',
+    ];
+
+    if (parts.isEmpty) {
+      return 'Payment failed or was cancelled in Cashfree checkout.';
+    }
+
+    return parts.join(' | ');
+  }
+
+  Future<void> _handlePaymentError(CFErrorResponse response, String orderId) async {
+    final gatewayMessage = _buildCashfreeErrorMessage(response);
+    _shouldAutoVerifyPendingWalletOrder = false;
+
+    if (orderId.trim().isEmpty) {
+      _showMessage(gatewayMessage, isError: true);
+      return;
+    }
+
+    setState(() => _pendingWalletOrderId = orderId);
+    await _settleWalletOrder(
+      orderId,
+      pendingMessage:
+          '$gatewayMessage. Re-checking order status with Cashfree before marking it failed.',
+    );
+  }
+
+  Future<void> _settleWalletOrder(
+    String orderId, {
+    String? pendingMessage,
+    bool silentPending = false,
+  }) async {
+    final trimmedOrderId = orderId.trim();
+    if (trimmedOrderId.isEmpty) {
+      _showMessage('No valid Cashfree order was found to verify.', isError: true);
+      return;
+    }
+
+    if (mounted) {
+      setState(() => _isWalletBusy = true);
+    }
+
     final verifyResponse = await ApiService.verifyWalletTopUp({
-      'Cashfree_order_id': orderId,
-      'Cashfree_payment_id': paymentId,
-      'Cashfree_signature': signature,
+      'orderId': trimmedOrderId,
     });
 
     if (!mounted) {
@@ -225,22 +284,48 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     setState(() => _isWalletBusy = false);
 
-    if (!verifyResponse.success) {
-      _showMessage(verifyResponse.message, isError: true);
+    final responseData = verifyResponse.data is Map<String, dynamic>
+        ? verifyResponse.data as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final status =
+        (responseData['status']?.toString() ?? '').trim().toUpperCase();
+
+    if (verifyResponse.success) {
+      setState(() {
+        _pendingWalletOrderId = null;
+        _walletAmountController.text = '100';
+        _shouldAutoVerifyPendingWalletOrder = false;
+      });
+      _showMessage(
+        verifyResponse.message.isNotEmpty
+            ? verifyResponse.message
+            : 'Payment verified and wallet credited.',
+      );
+      await _refreshWalletData();
+      await _refreshNotificationsCount();
       return;
     }
 
-    setState(() {
-      _pendingWalletOrderId = null;
-      _walletAmountController.text = '100';
-    });
-    _showMessage('Payment verified and wallet credited.');
-    await _refreshWalletData();
-    await _refreshNotificationsCount();
-  }
+    setState(() => _pendingWalletOrderId = trimmedOrderId);
 
-  void _handlePaymentError(CFErrorResponse response, String orderId) {
-    _showMessage('Payment failed or cancelled. Please try again.', isError: true);
+    final loweredMessage = verifyResponse.message.toLowerCase();
+    final isStillProcessing = status == 'ACTIVE' ||
+        status == 'PENDING' ||
+        loweredMessage.contains('processing') ||
+        loweredMessage.contains('not completed yet');
+
+    if (isStillProcessing) {
+      if (!silentPending) {
+        _showMessage(
+          pendingMessage ??
+              'Payment is still processing. If money was debited, wait a few seconds and tap Verify Payment.',
+          isError: true,
+        );
+      }
+      return;
+    }
+
+    _showMessage(verifyResponse.message, isError: true);
   }
 
   Future<void> _handleAddMoney() async {
@@ -282,6 +367,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
 
     setState(() => _pendingWalletOrderId = orderId);
+    _shouldAutoVerifyPendingWalletOrder = true;
 
     if (kIsWeb) {
       final paymentUrl = data['paymentUrl']?.toString() ?? '';
@@ -314,42 +400,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
-    final cfEnvironment = environmentLabel == 'SANDBOX'
-        ? CFEnvironment.SANDBOX
-        : CFEnvironment.PRODUCTION;
-
-    final options = CFSessionBuilder()
-        .setEnvironment(cfEnvironment)
-        .setOrderId(orderId)
-        .setPaymentSessionId(paymentSessionId)
-        .build();
-        
-    final cfTheme = CFThemeBuilder()
-        .setPrimaryTextColor("#E63946")
-        .setButtonBackgroundColor("#E63946")
-        .build();
-        
-    final cfPaymentComponent = CFPaymentComponentBuilder()
-        .setComponents([
-          CFPaymentModes.CARD,
-          CFPaymentModes.UPI,
-          CFPaymentModes.NETBANKING,
-          CFPaymentModes.WALLET,
-          CFPaymentModes.PAYLATER,
-          CFPaymentModes.EMI
-        ])
-        .build();
-
-    final dropCheckoutPayment = CFDropCheckoutPaymentBuilder()
-        .setSession(options)
-        .setTheme(cfTheme)
-        .setPaymentComponent(cfPaymentComponent)
-        .build();
-
     try {
-      _cfPaymentGatewayService.doPayment(dropCheckoutPayment);
-    } catch (_) {
-      _showMessage('Unable to open Cashfree checkout.', isError: true);
+      _cfPaymentGatewayService.setCallback(
+        _handlePaymentSuccess,
+        _handlePaymentError,
+      );
+
+      final cfEnvironment = environmentLabel == 'SANDBOX'
+          ? CFEnvironment.SANDBOX
+          : CFEnvironment.PRODUCTION;
+
+      final session = CFSessionBuilder()
+          .setEnvironment(cfEnvironment)
+          .setOrderId(orderId)
+          .setPaymentSessionId(paymentSessionId)
+          .build();
+
+      final cfTheme = CFThemeBuilder()
+          .setNavigationBarBackgroundColorColor("#E63946")
+          .setNavigationBarTextColor("#FFFFFF")
+          .setButtonBackgroundColor("#E63946")
+          .setButtonTextColor("#FFFFFF")
+          .setPrimaryTextColor("#111827")
+          .setSecondaryTextColor("#6B7280")
+          .build();
+
+      final webCheckoutPayment = CFWebCheckoutPaymentBuilder()
+          .setSession(session)
+          .setTheme(cfTheme)
+          .build();
+
+      _cfPaymentGatewayService.doPayment(webCheckoutPayment);
+    } catch (error) {
+      _showMessage('Unable to open Cashfree checkout: $error', isError: true);
     }
   }
 
@@ -360,27 +443,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
-    setState(() => _isWalletBusy = true);
-    final response = await ApiService.verifyWalletTopUp({'orderId': orderId});
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() => _isWalletBusy = false);
-
-    if (!response.success) {
-      _showMessage(response.message, isError: true);
-      return;
-    }
-
-    setState(() {
-      _pendingWalletOrderId = null;
-      _walletAmountController.text = '100';
-    });
-    _showMessage(response.message);
-    await _refreshWalletData();
-    await _refreshNotificationsCount();
+    _shouldAutoVerifyPendingWalletOrder = false;
+    await _settleWalletOrder(orderId);
   }
 
   Future<void> _openPaymentsScreen() async {
