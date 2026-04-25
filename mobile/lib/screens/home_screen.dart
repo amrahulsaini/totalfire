@@ -272,13 +272,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? response.data as Map<String, dynamic>
         : const <String, dynamic>{};
     final orderId = data['orderId']?.toString() ?? '';
-    final key = data['key']?.toString() ?? '';
-    final amountPaise = data['amount'] is num
-        ? (data['amount'] as num).toInt()
-        : (amount * 100).round();
-    final currency = data['currency']?.toString() ?? 'INR';
+    final paymentSessionId = data['paymentSessionId']?.toString() ?? '';
+    final environmentLabel =
+        (data['environment']?.toString() ?? 'PRODUCTION').toUpperCase();
 
-    if (orderId.isEmpty || key.isEmpty || amountPaise <= 0) {
+    if (orderId.isEmpty || paymentSessionId.isEmpty) {
       _showMessage('Could not initialize Cashfree order.', isError: true);
       return;
     }
@@ -288,7 +286,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (kIsWeb) {
       final paymentUrl = data['paymentUrl']?.toString() ?? '';
       if (paymentUrl.isEmpty) {
-        _showMessage('Could not initialize web payment link.', isError: true);
+        _showMessage(
+          'Cashfree web checkout link is unavailable for this order. Please use the app checkout flow.',
+          isError: true,
+        );
         return;
       }
 
@@ -313,10 +314,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
+    final cfEnvironment = environmentLabel == 'SANDBOX'
+        ? CFEnvironment.SANDBOX
+        : CFEnvironment.PRODUCTION;
+
     final options = CFSessionBuilder()
-        .setEnvironment(CFEnvironment.PRODUCTION)
+        .setEnvironment(cfEnvironment)
         .setOrderId(orderId)
-        .setPaymentSessionId(data['paymentSessionId']?.toString() ?? '')
+        .setPaymentSessionId(paymentSessionId)
         .build();
         
     final cfTheme = CFThemeBuilder()
