@@ -27,10 +27,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await cf.PGOrderFetchPayments(
-      "2023-08-01",
-      cashfreeOrderId
-    );
+    const response = await cf.PGOrderFetchPayments(cashfreeOrderId);
     const paymentsList = response.data;
 
     // Find a successful payment

@@ -43,10 +43,7 @@ export async function POST(request: Request) {
       }
     };
 
-    const response = await cf.PGCreateOrder(
-      "2023-08-01",
-      orderRequest
-    );
+    const response = await cf.PGCreateOrder(orderRequest);
 
     return NextResponse.json({
       orderId: response.data.order_id,
