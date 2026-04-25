@@ -5,6 +5,7 @@ import {
   cashfree,
   cashfreeEnvironmentName,
   getCashfreeErrorMessage,
+  getCashfreeHostedCheckoutUrl,
   getCashfreeReturnUrl,
   isCashfreeConfigured,
 } from "@/lib/cashfree";
@@ -104,6 +105,14 @@ export async function POST(request: Request) {
     };
 
     const response = await cashfree.PGCreateOrder(orderRequest);
+    const createdOrderId = response.data.order_id?.toString().trim();
+    const paymentSessionId = response.data.payment_session_id
+      ?.toString()
+      .trim();
+
+    if (!createdOrderId || !paymentSessionId) {
+      throw new Error("Cashfree create order response was missing checkout data");
+    }
 
     await pool.query(
       `INSERT INTO wallet_payment_transactions (
@@ -125,7 +134,7 @@ export async function POST(request: Request) {
         updated_at = CURRENT_TIMESTAMP`,
       [
         user.id,
-        response.data.order_id,
+        createdOrderId,
         amount,
         response.data.order_currency || "INR",
         "Cashfree wallet order created",
@@ -140,12 +149,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       message: "Payment order created",
-      orderId: response.data.order_id,
+      orderId: createdOrderId,
       amount: amount,
+      checkoutUrl: getCashfreeHostedCheckoutUrl({
+        orderId: createdOrderId,
+        paymentSessionId,
+        environment: cashfreeEnvironmentName,
+      }),
       currency: response.data.order_currency || "INR",
       environment: cashfreeEnvironmentName,
       paymentUrl: paymentLink,
-      paymentSessionId: response.data.payment_session_id,
+      paymentSessionId,
     });
   } catch (error) {
     console.error("Cashfree order error:", error);

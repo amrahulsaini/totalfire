@@ -126,6 +126,21 @@ class ApiService {
     return '$baseUrl$path';
   }
 
+  static Uri buildCashfreeHostedCheckoutUri({
+    required String orderId,
+    required String paymentSessionId,
+    required String environment,
+  }) {
+    return _buildUri(
+      '/wallet/cashfree/checkout',
+      {
+        'order_id': orderId.trim(),
+        'payment_session_id': paymentSessionId.trim(),
+        'environment': environment.trim(),
+      },
+    );
+  }
+
   static Future<void> _persistLogin(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', data['token']?.toString() ?? '');

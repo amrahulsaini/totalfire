@@ -23,7 +23,25 @@ export function isCashfreeConfigured() {
 }
 
 export function getCashfreeReturnUrl() {
-  return `${cashfreeBaseUrl}/?wallet=verify&order_id={order_id}`;
+  return `${cashfreeBaseUrl}/wallet/cashfree/result?order_id={order_id}`;
+}
+
+export function getCashfreeHostedCheckoutUrl({
+  orderId,
+  paymentSessionId,
+  environment = cashfreeEnvironmentName,
+}: {
+  orderId: string;
+  paymentSessionId: string;
+  environment?: string;
+}) {
+  const params = new URLSearchParams({
+    order_id: orderId,
+    payment_session_id: paymentSessionId,
+    environment,
+  });
+
+  return `${cashfreeBaseUrl}/wallet/cashfree/checkout?${params.toString()}`;
 }
 
 export function getCashfreeErrorMessage(
