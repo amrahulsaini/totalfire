@@ -36,9 +36,9 @@ export async function POST(request: Request) {
       order_id: orderId,
       customer_details: {
         customer_id: `CUST_${user.id}`,
-        customer_phone: user.phone || "9999999999",
-        customer_name: user.name || "TotalFire User",
-        customer_email: user.email || "user@totalfire.in"
+        customer_phone: (user as any).phone || "9999999999",
+        customer_name: (user as any).name || "TotalFire User",
+        customer_email: (user as any).email || "user@totalfire.in"
       },
       order_meta: {
         return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://totalfire.in'}/game/wallet/verify?order_id={order_id}`
