@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       orderId: response.data.order_id,
       amount: amount,
       currency: "INR",
-      paymentUrl: response.data.payment_link || response.data.payment_session_id,
+      paymentUrl: (response.data as any).payment_link || response.data.payment_session_id,
       paymentSessionId: response.data.payment_session_id,
     });
   } catch (error: any) {
