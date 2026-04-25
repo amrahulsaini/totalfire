@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import StoreShell from "../_store/StoreShell";
 
 export const metadata = {
@@ -70,22 +70,22 @@ export default function SupportPage() {
             <ul className="space-y-3">
               <li>
                 <Link href="/policies/privacy" className="flex items-center gap-3 text-gray-700 hover:text-orange-600 font-semibold p-3 -mx-3 rounded-lg hover:bg-orange-50 transition-colors">
-                  <span className="text-orange-500">→</span> Privacy Policy
+                  <span className="text-orange-500">?</span> Privacy Policy
                 </Link>
               </li>   
               <li>
                 <Link href="/policies/terms" className="flex items-center gap-3 text-gray-700 hover:text-orange-600 font-semibold p-3 -mx-3 rounded-lg hover:bg-orange-50 transition-colors">
-                  <span className="text-orange-500">→</span> Terms of Use
+                  <span className="text-orange-500">?</span> Terms of Use
                 </Link>
               </li>       
               <li>
                 <Link href="/policies/shipping" className="flex items-center gap-3 text-gray-700 hover:text-orange-600 font-semibold p-3 -mx-3 rounded-lg hover:bg-orange-50 transition-colors">
-                  <span className="text-orange-500">→</span> Shipping Policy
+                  <span className="text-orange-500">?</span> Shipping Policy
                 </Link>
               </li> 
               <li>
                 <Link href="/policies/refund" className="flex items-center gap-3 text-gray-700 hover:text-orange-600 font-semibold p-3 -mx-3 rounded-lg hover:bg-orange-50 transition-colors">
-                  <span className="text-orange-500">→</span> Refund Policy
+                  <span className="text-orange-500">?</span> Refund Policy
                 </Link>
               </li>     
             </ul>

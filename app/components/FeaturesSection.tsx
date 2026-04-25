@@ -11,8 +11,8 @@ export default function FeaturesSection() {
     },
     {
       icon: <Lock size={24} />,
-      title: "Secured by Razorpay",
-      description: "All payments are processed through Razorpay ensuring complete security and reliability.",
+      title: "Secured by Cashfree",
+      description: "All payments are processed through Cashfree ensuring complete security and reliability.",
       color: "var(--accent-blue)",
     },
     {

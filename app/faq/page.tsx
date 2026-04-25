@@ -26,7 +26,7 @@ const faqs = [
     questions: [
       {
         q: "How are payments processed?",
-        a: "All payments on TotalFire are processed securely through Razorpay, India's leading payment gateway. Your financial data is fully encrypted and protected.",
+        a: "All payments on TotalFire are processed securely through Cashfree, India's leading payment gateway. Your financial data is fully encrypted and protected.",
       },
       {
         q: "Is there a refund policy?",

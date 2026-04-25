@@ -34,8 +34,8 @@ export default function PlaceOrderButton() {
                   <line x1="2" y1="10" x2="22" y2="10" />
                 </svg>
               </div>
-              <p className="text-lg font-semibold mb-2">Razorpay Integration Pending</p>
-              <p className="text-gray-500">Payments will be made by Razorpay PG soon. We are finalizing our merchant compliance setup.</p>
+              <p className="text-lg font-semibold mb-2">Cashfree Integration Pending</p>
+              <p className="text-gray-500">Payments will be made by Cashfree PG soon. We are finalizing our merchant compliance setup.</p>
             </div>
             <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
               <button 

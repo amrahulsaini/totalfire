@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 export default function Footer() {
   const pathname = usePathname();
-  const portalBase = pathname.startsWith("/main") ? "/main" : "";
+  const portalBase = pathname.startsWith("/game") ? "/game" : "";
 
   const portalHref = (path: string) => {
     if (!portalBase) {
@@ -68,7 +68,7 @@ export default function Footer() {
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 Payments secured by
               </p>
-              <span className="font-bold text-sm" style={{ color: "var(--accent-blue)" }}>Razorpay</span>
+              <span className="font-bold text-sm" style={{ color: "var(--accent-blue)" }}>Cashfree</span>
             </div>
           </div>
         </div>

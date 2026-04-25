@@ -152,7 +152,7 @@ export default async function ModeDetailPage({
                   <Lock size={18} style={{ color: "var(--accent-blue)" }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Secured by Razorpay</p>
+                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Secured by Cashfree</p>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>100% safe transactions</p>
                 </div>
               </div>

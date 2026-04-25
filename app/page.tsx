@@ -51,7 +51,7 @@ export default function Home() {
             <ul className="space-y-4 mb-8 text-gray-700">
               <li className="flex items-center gap-3"><Flame size={20} className="text-orange-500" /> Fire-themed peripherals curated for esports setups</li>
               <li className="flex items-center gap-3"><WalletCards size={20} className="text-gray-500" /> Transparent pricing, taxes, and order summaries</li>
-              <li className="flex items-center gap-3"><ShieldCheck size={20} className="text-green-600" /> Razorpay-backed secure payment journey</li>
+              <li className="flex items-center gap-3"><ShieldCheck size={20} className="text-green-600" /> Cashfree-backed secure payment journey</li>
               <li className="flex items-center gap-3"><Truck size={20} className="text-gray-500" /> Clear shipping and fulfillment disclosure pages</li>
             </ul>
             <div className="bg-white rounded-lg p-4 text-center text-gray-900 border border-gray-200 font-medium shadow-sm">

@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -88,7 +88,7 @@ export default async function ProductDetailPage({
               <article>
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 block">Ratings</label>
                 <span className="text-sm font-semibold text-gray-900">
-                  <span className="text-green-600 mr-1">★</span>
+                  <span className="text-green-600 mr-1">?</span>
                   {product.rating.toFixed(1)} ({product.reviews.toLocaleString("en-IN")})
                 </span>
               </article>
@@ -113,7 +113,7 @@ export default async function ProductDetailPage({
                 <ul className="space-y-2">
                   {product.features.map((feature) => (
                     <li key={feature} className="flex gap-2 items-start">
-                      <span className="text-orange-500 font-bold mt-0.5">•</span>
+                      <span className="text-orange-500 font-bold mt-0.5">�</span>
                       <span className="text-gray-700 leading-tight">{feature}</span>
                     </li>
                   ))}
@@ -125,7 +125,7 @@ export default async function ProductDetailPage({
                 <ul className="space-y-2">
                   {product.specs.map((spec) => (
                     <li key={spec} className="flex gap-2 items-start">
-                      <span className="text-gray-300 font-bold mt-0.5">•</span>
+                      <span className="text-gray-300 font-bold mt-0.5">�</span>
                       <span className="text-gray-700 leading-tight">{spec}</span>
                     </li>
                   ))}

@@ -63,7 +63,7 @@ export default async function MainModeDetailPage({
     <div className="page-enter pt-20 pb-20" style={{ background: "var(--bg-primary)" }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link
-          href="/main/modes"
+          href="/game/modes"
           className="inline-flex items-center gap-2 mb-8 text-sm font-medium transition-colors"
           style={{ color: "var(--text-secondary)" }}
         >
@@ -156,7 +156,7 @@ export default async function MainModeDetailPage({
                   <Lock size={18} style={{ color: "var(--accent-blue)" }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Secured by Razorpay</p>
+                  <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Secured by Cashfree</p>
                   <p className="text-xs" style={{ color: "var(--text-muted)" }}>100% safe transactions</p>
                 </div>
               </div>

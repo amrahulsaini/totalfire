@@ -18,7 +18,7 @@ export default function ModesPage() {
           </h1>
           <p className="section-subheading">
             Choose from all available game modes. Every entry fee contributes to your skill-based rewards.
-            All payments are secured via Razorpay. No refunds once registered.
+            All payments are secured via Cashfree. No refunds once registered.
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default function ModesPage() {
         <div className="mt-16 glass-card p-8 text-center">
           <h3 className="text-lg font-bold mb-3" style={{ color: "var(--text-primary)" }}>Important Information</h3>
           <div className="flex flex-wrap justify-center gap-6 text-sm" style={{ color: "var(--text-secondary)" }}>
-            <span className="flex items-center gap-2"><Lock size={14} /> Payments secured by Razorpay</span>
+            <span className="flex items-center gap-2"><Lock size={14} /> Payments secured by Cashfree</span>
             <span className="flex items-center gap-2"><Target size={14} /> Skill-based earnings only</span>
             <span className="flex items-center gap-2"><XCircle size={14} /> No refunds after registration</span>
             <span className="flex items-center gap-2"><DollarSign size={14} /> Entry fee mandatory per player</span>

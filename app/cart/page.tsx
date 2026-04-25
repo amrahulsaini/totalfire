@@ -86,7 +86,7 @@ export default async function CartPage({
               Proceed to Checkout
             </Link>
             <p className="text-xs text-gray-500 text-center leading-relaxed">
-              Secure card, UPI, and netbanking flow via Razorpay checkout gateway.
+              Secure card, UPI, and netbanking flow via Cashfree checkout gateway.
             </p>
           </aside>
         </div>

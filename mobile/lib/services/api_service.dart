@@ -497,7 +497,7 @@ class ApiService {
     try {
       final result = await _request(
         'POST',
-        '/api/wallet/razorpay',
+        '/api/wallet/Cashfree',
         body: {'amount': amount},
       );
 

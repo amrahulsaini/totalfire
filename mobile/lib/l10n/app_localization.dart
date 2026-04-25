@@ -116,7 +116,7 @@ class AppLocalization {
     'Wallet Actions': 'वॉलेट कार्य',
     'Add Money': 'पैसे जोड़ें',
     'Withdraw Money': 'पैसे निकालें',
-    'Pay With Razorpay': 'रेज़रपे से भुगतान करें',
+    'Pay With Cashfree': 'रेज़रपे से भुगतान करें',
     'Verify Payment': 'भुगतान सत्यापित करें',
     'Request Withdrawal': 'निकासी अनुरोध करें',
     'Open Withdrawal Center': 'निकासी केंद्र खोलें',

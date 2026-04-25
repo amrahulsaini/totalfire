@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import StoreShell from "../_store/StoreShell";
 import { formatINR, storeProducts } from "../_store/catalog";
 import PlaceOrderButton from "./PlaceOrderButton";

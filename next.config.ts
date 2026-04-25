@@ -3,25 +3,25 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
-      // Removed redirect from / to /main to keep store at homepage
+      // Removed redirect from / to /game to keep store at homepage
       {
         source: "/about",
-        destination: "/main/about",
+        destination: "/game/about",
         permanent: false,
       },
       {
         source: "/contact",
-        destination: "/main/contact",
+        destination: "/game/contact",
         permanent: false,
       },
       {
         source: "/faq",
-        destination: "/main/faq",
+        destination: "/game/faq",
         permanent: false,
       },
       {
         source: "/modes/:path*",
-        destination: "/main/modes/:path*",
+        destination: "/game/modes/:path*",
         permanent: false,
       },
       {

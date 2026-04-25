@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
 
           <h2>3. Payment Data</h2>
           <p>
-            Payment processing is handled through Razorpay. Card and UPI credentials are processed by
+            Payment processing is handled through Cashfree. Card and UPI credentials are processed by
             the gateway and are not stored in plaintext on this storefront.
           </p>
 

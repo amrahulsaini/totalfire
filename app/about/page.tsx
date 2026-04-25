@@ -53,7 +53,7 @@ export default function AboutPage() {
             {
               icon: <Lock size={28} />,
               title: "Secure & Transparent",
-              desc: "All payments are processed through Razorpay, ensuring complete security. Our earnings model is transparent — what you see is what you get.",
+              desc: "All payments are processed through Cashfree, ensuring complete security. Our earnings model is transparent — what you see is what you get.",
             },
             {
               icon: <Scale size={28} />,

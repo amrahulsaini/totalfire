@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:Cashfree_flutter/Cashfree_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
@@ -29,7 +29,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  final Razorpay _razorpay = Razorpay();
+  final Cashfree _Cashfree = Cashfree();
   final TextEditingController _walletAmountController =
       TextEditingController(text: '100');
 
@@ -51,9 +51,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    _Cashfree.on(Cashfree.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _Cashfree.on(Cashfree.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _Cashfree.on(Cashfree.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
     _loadAppVersion();
     _loadDashboard();
   }
@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _razorpay.clear();
+    _Cashfree.clear();
     _walletAmountController.dispose();
     super.dispose();
   }
@@ -212,9 +212,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     setState(() => _isWalletBusy = true);
     final verifyResponse = await ApiService.verifyWalletTopUp({
-      'razorpay_order_id': orderId,
-      'razorpay_payment_id': paymentId,
-      'razorpay_signature': signature,
+      'Cashfree_order_id': orderId,
+      'Cashfree_payment_id': paymentId,
+      'Cashfree_signature': signature,
     });
 
     if (!mounted) {
@@ -282,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final currency = data['currency']?.toString() ?? 'INR';
 
     if (orderId.isEmpty || key.isEmpty || amountPaise <= 0) {
-      _showMessage('Could not initialize Razorpay order.', isError: true);
+      _showMessage('Could not initialize Cashfree order.', isError: true);
       return;
     }
 
@@ -308,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       );
 
       if (!opened) {
-        _showMessage('Could not open Razorpay payment page.', isError: true);
+        _showMessage('Could not open Cashfree payment page.', isError: true);
         return;
       }
 
@@ -331,9 +331,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     };
 
     try {
-      _razorpay.open(options);
+      _Cashfree.open(options);
     } catch (_) {
-      _showMessage('Unable to open Razorpay checkout.', isError: true);
+      _showMessage('Unable to open Cashfree checkout.', isError: true);
     }
   }
 
@@ -781,7 +781,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Add money with Razorpay here. Use the separate Withdrawal Center for payout requests.',
+            'Add money with Cashfree here. Use the separate Withdrawal Center for payout requests.',
             style: TextStyle(color: AppColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 20),
@@ -813,7 +813,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Use Razorpay to top up instantly. Withdrawals are managed from the dedicated Withdrawal Center.',
+                  'Use Cashfree to top up instantly. Withdrawals are managed from the dedicated Withdrawal Center.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 16),
@@ -857,7 +857,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               color: Colors.white,
                             ),
                           )
-                        : Text(tx('Pay With Razorpay')),
+                        : Text(tx('Pay With Cashfree')),
                   ),
                 ),
                 if (_pendingWalletOrderId != null && _pendingWalletOrderId!.isNotEmpty) ...[

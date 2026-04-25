@@ -7,7 +7,7 @@ import Footer from "./Footer";
 
 export default function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isPortalRoute = pathname === "/main" || pathname.startsWith("/main/");
+  const isPortalRoute = pathname === "/game" || pathname.startsWith("/game/");
 
   return (
     <>

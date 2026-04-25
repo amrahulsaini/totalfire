@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function MainPortalPage() {
   return (
     <div className="page-enter">
-      <HeroSection basePath="/main" />
+      <HeroSection basePath="/game" />
 
       <section className="py-24" style={{ background: "var(--bg-primary)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,9 +25,9 @@ export default function MainPortalPage() {
               Multiple game modes with real money rewards. Pick your favorite and start competing today.
             </p>
           </div>
-          <ModesShowcase limit={4} basePath="/main" />
+          <ModesShowcase limit={4} basePath="/game" />
           <div className="text-center mt-12">
-            <Link href="/main/modes" className="outline-btn text-lg">
+            <Link href="/game/modes" className="outline-btn text-lg">
               View All Modes -&gt;
             </Link>
           </div>
@@ -57,7 +57,7 @@ export default function MainPortalPage() {
               {
                 step: "02",
                 title: "Pay & Join",
-                desc: "Pay the entry fee securely via Razorpay and get matched instantly.",
+                desc: "Pay the entry fee securely via Cashfree and get matched instantly.",
                 icon: <CreditCard size={36} />,
               },
               {
@@ -100,7 +100,7 @@ export default function MainPortalPage() {
           <p className="text-lg mb-8" style={{ color: "var(--text-secondary)" }}>
             Join thousands of gamers competing for real rewards. Your next win is just a click away.
           </p>
-          <Link href="/main/modes" className="fire-btn text-lg !py-4 !px-12">
+          <Link href="/game/modes" className="fire-btn text-lg !py-4 !px-12">
             Join a Tournament Now
           </Link>
         </div>

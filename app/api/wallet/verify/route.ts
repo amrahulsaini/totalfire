@@ -2,68 +2,47 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyUser } from "@/lib/auth";
 import { createUserNotification } from "@/lib/notifications";
-import crypto from "crypto";
 import type { RowDataPacket } from "mysql2";
-import Razorpay from "razorpay";
+import { Cashfree } from "cashfree-pg";
+
+Cashfree.XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
+Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
+Cashfree.XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION"
+  ? Cashfree.Environment.PRODUCTION
+  : Cashfree.Environment.SANDBOX;
 
 export async function POST(request: Request) {
   const user = await verifyUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const payload = await request.json().catch(() => ({}));
-  const razorpayOrderId =
-    payload.razorpay_order_id?.toString() ?? payload.orderId?.toString() ?? "";
-  const razorpayPaymentId = payload.razorpay_payment_id?.toString() ?? "";
-  const razorpaySignature = payload.razorpay_signature?.toString() ?? "";
+  const cashfreeOrderId =
+    payload.order_id?.toString() ?? payload.orderId?.toString() ?? payload.Cashfree_order_id?.toString() ?? "";
 
-  if (!razorpayOrderId) {
+  if (!cashfreeOrderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
   }
 
   try {
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID!,
-      key_secret: process.env.RAZORPAY_KEY_SECRET!,
-    });
+    const response = await Cashfree.PGOrderFetchPayments("2023-08-01", cashfreeOrderId);
+    const paymentsList = response.data;
 
-    const order = await razorpay.orders.fetch(razorpayOrderId);
-    const receipt = order?.receipt?.toString() ?? "";
-    if (!receipt.startsWith(`RECPT_${user.id}_`)) {
-      return NextResponse.json({ error: "Order does not belong to this user" }, { status: 403 });
+    // Find a successful payment
+    const completedPayment = paymentsList.find((item: any) =>
+      item?.payment_status === "SUCCESS"
+    );
+
+    if (!completedPayment) {
+      return NextResponse.json(
+        { error: "Payment not completed yet or failed. Please try again in a few seconds." },
+        { status: 202 }
+      );
     }
 
-    let paymentId = razorpayPaymentId;
-    let payment: any;
+    const paymentId = completedPayment.cf_payment_id?.toString() || completedPayment.payment_group_details?.cf_payment_id?.toString();
 
-    if (razorpayPaymentId && razorpaySignature) {
-      const generatedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest("hex");
-
-      if (generatedSignature !== razorpaySignature) {
-        return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-      }
-
-      payment = await razorpay.payments.fetch(razorpayPaymentId);
-      if (!payment || payment.order_id !== razorpayOrderId) {
-        return NextResponse.json({ error: "Payment/order mismatch" }, { status: 400 });
-      }
-    } else {
-      const paymentsList = await (razorpay as any).orders.fetchPayments(razorpayOrderId);
-      const completedPayment = (paymentsList?.items ?? []).find((item: any) =>
-        item?.status === "captured" || item?.status === "authorized"
-      );
-
-      if (!completedPayment?.id) {
-        return NextResponse.json(
-          { error: "Payment not completed yet. Please try again in a few seconds." },
-          { status: 202 }
-        );
-      }
-
-      paymentId = completedPayment.id.toString();
-      payment = await razorpay.payments.fetch(paymentId);
+    if (!paymentId) {
+      return NextResponse.json({ error: "Could not retrieve valid payment ID" }, { status: 400 });
     }
 
     const [existing] = await pool.query<RowDataPacket[]>(
@@ -75,7 +54,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Payment already verified", status: "SUCCESS" });
     }
 
-    const amountDeposited = Number(payment?.amount) / 100;
+    const amountDeposited = Number(completedPayment.payment_amount);
     if (!Number.isFinite(amountDeposited) || amountDeposited <= 0) {
       return NextResponse.json({ error: "Invalid payment amount" }, { status: 400 });
     }
@@ -85,7 +64,7 @@ export async function POST(request: Request) {
       [amountDeposited, user.id]
     );
     await pool.query(
-      "INSERT INTO wallet_transactions (user_id, amount, type, description, reference_id) VALUES (?, ?, 'credit', 'Razorpay Wallet Top-up', ?)",
+      "INSERT INTO wallet_transactions (user_id, amount, type, description, reference_id) VALUES (?, ?, 'credit', 'Cashfree Wallet Top-up', ?)",
       [user.id, amountDeposited, paymentId]
     );
 
@@ -97,13 +76,13 @@ export async function POST(request: Request) {
       payload: {
         amount: amountDeposited,
         paymentId,
-        orderId: razorpayOrderId,
+        orderId: cashfreeOrderId,
       },
     });
 
-    return NextResponse.json({ status: "SUCCESS", message: "Payment verified and wallet credited" });
-  } catch (error) {
-    console.error("Razorpay verification error:", error);
+    return NextResponse.json({ message: "Payment verified successfully", status: "SUCCESS" });
+  } catch (error: any) {
+    console.error("Cashfree verification error:", error?.response?.data || error);
     return NextResponse.json({ error: "Failed to verify payment" }, { status: 500 });
   }
 }

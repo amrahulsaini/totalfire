@@ -70,7 +70,7 @@ export default function ContactPage() {
                 </div>
               </div>
               <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <li className="flex items-center gap-2"><Lock size={14} /> All payments secured by Razorpay</li>
+                <li className="flex items-center gap-2"><Lock size={14} /> All payments secured by Cashfree</li>
                 <li className="flex items-center gap-2"><XCircle size={14} /> No refunds after registration</li>
                 <li className="flex items-center gap-2"><Target size={14} /> Skill-based earnings only</li>
                 <li className="flex items-center gap-2"><DollarSign size={14} /> Entry fee mandatory for all players</li>
