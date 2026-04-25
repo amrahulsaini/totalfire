@@ -4,7 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:Cashfree_flutter/Cashfree_flutter.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cferrorresponse/cferrorresponse.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfdropcheckoutpayment.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cftheme/cftheme.dart';
+import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpaymentcomponents/cfpaymentcomponent.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
@@ -29,7 +35,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  final Cashfree _Cashfree = Cashfree();
+  final CFPaymentGatewayService _cfPaymentGatewayService = CFPaymentGatewayService();
   final TextEditingController _walletAmountController =
       TextEditingController(text: '100');
 
@@ -51,9 +57,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _Cashfree.on(Cashfree.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _Cashfree.on(Cashfree.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _Cashfree.on(Cashfree.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    _cfPaymentGatewayService.setCallback(_handlePaymentSuccess, _handlePaymentError);
     _loadAppVersion();
     _loadDashboard();
   }
@@ -61,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _Cashfree.clear();
     _walletAmountController.dispose();
     super.dispose();
   }
@@ -200,12 +203,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
-    final orderId = response.orderId;
-    final paymentId = response.paymentId;
-    final signature = response.signature;
+  void _handlePaymentSuccess(String orderId) async {
+    final paymentId = '';
+    final signature = '';
 
-    if (orderId == null || paymentId == null || signature == null) {
+    if (orderId.isEmpty) {
       _showMessage('Payment data missing. Please contact support.', isError: true);
       return;
     }
@@ -237,13 +239,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     await _refreshNotificationsCount();
   }
 
-  void _handlePaymentError(PaymentFailureResponse response) {
+  void _handlePaymentError(CFErrorResponse response, String orderId) {
     _showMessage('Payment failed or cancelled. Please try again.', isError: true);
-  }
-
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    final name = response.walletName ?? 'wallet';
-    _showMessage('Selected external wallet: $name');
   }
 
   Future<void> _handleAddMoney() async {
@@ -316,22 +313,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
-    final options = {
-      'key': key,
-      'amount': amountPaise,
-      'currency': currency,
-      'name': 'Total Fire',
-      'description': 'Wallet Top-up',
-      'order_id': orderId,
-      'prefill': {
-        'contact': _user?.mobile ?? '',
-        'email': _user?.email ?? '',
-      },
-      'theme': {'color': '#E63946'},
-    };
+    final options = CFSessionBuilder()
+        .setEnvironment(CFEnvironment.PRODUCTION)
+        .setOrderId(orderId)
+        .setPaymentSessionId(data['paymentSessionId']?.toString() ?? '')
+        .build();
+        
+    final cfTheme = CFThemeBuilder()
+        .setPrimaryTextColor("#E63946")
+        .setButtonBackgroundColor("#E63946")
+        .build();
+        
+    final cfPaymentComponent = CFPaymentComponentBuilder()
+        .setComponents([
+          CFPaymentModes.CARD,
+          CFPaymentModes.UPI,
+          CFPaymentModes.NETBANKING,
+          CFPaymentModes.WALLET,
+          CFPaymentModes.PAYLATER,
+          CFPaymentModes.EMI
+        ])
+        .build();
+
+    final dropCheckoutPayment = CFDropCheckoutPaymentBuilder()
+        .setSession(options)
+        .setTheme(cfTheme)
+        .setPaymentComponent(cfPaymentComponent)
+        .build();
 
     try {
-      _Cashfree.open(options);
+      _cfPaymentGatewayService.doPayment(dropCheckoutPayment);
     } catch (_) {
       _showMessage('Unable to open Cashfree checkout.', isError: true);
     }
