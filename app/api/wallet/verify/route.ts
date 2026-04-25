@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const paymentId = completedPayment.cf_payment_id?.toString() || completedPayment.payment_group_details?.cf_payment_id?.toString();
+    const paymentId = completedPayment.cf_payment_id?.toString() || (completedPayment as any).payment_group_details?.cf_payment_id?.toString();
 
     if (!paymentId) {
       return NextResponse.json({ error: "Could not retrieve valid payment ID" }, { status: 400 });
