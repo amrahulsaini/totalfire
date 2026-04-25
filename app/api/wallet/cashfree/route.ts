@@ -6,6 +6,7 @@ import {
   cashfreeEnvironmentName,
   getCashfreeErrorMessage,
   getCashfreeHostedCheckoutUrl,
+  getCashfreeNotifyUrl,
   getCashfreeReturnUrl,
   isCashfreeConfigured,
 } from "@/lib/cashfree";
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
         customer_email: userRow.email || "support@totalfire.in",
       },
       order_meta: {
+        notify_url: getCashfreeNotifyUrl(),
         return_url: getCashfreeReturnUrl(),
       },
       order_note: "Wallet top-up",

@@ -26,6 +26,10 @@ export function getCashfreeReturnUrl() {
   return `${cashfreeBaseUrl}/wallet/cashfree/result?order_id={order_id}`;
 }
 
+export function getCashfreeNotifyUrl() {
+  return `${cashfreeBaseUrl}/api/cashfree/webhook`;
+}
+
 export function getCashfreeHostedCheckoutUrl({
   orderId,
   paymentSessionId,

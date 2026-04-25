@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localization.dart';
 import '../models/app_models.dart';
@@ -26,6 +27,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  static const String _pendingWalletOrderStorageKey = 'pending_wallet_order_id';
+
   final TextEditingController _walletAmountController =
       TextEditingController(text: '100');
 
@@ -48,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    unawaited(_restorePendingWalletOrder());
     _loadAppVersion();
     _loadDashboard();
   }
@@ -64,6 +68,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       unawaited(PushService.syncTokenWithBackend());
       unawaited(_refreshNotificationsCount());
+      if (_pendingWalletOrderId?.trim().isNotEmpty ?? false) {
+        unawaited(_refreshWalletData());
+        unawaited(_closeCashfreeCheckoutIfPossible());
+      }
 
       final pendingOrderId = _pendingWalletOrderId?.trim() ?? '';
       if (_shouldAutoVerifyPendingWalletOrder &&
@@ -77,6 +85,46 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           silentPending: true,
         ));
       }
+    }
+  }
+
+  Future<void> _restorePendingWalletOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pendingOrderId =
+        prefs.getString(_pendingWalletOrderStorageKey)?.trim() ?? '';
+
+    if (!mounted || pendingOrderId.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _pendingWalletOrderId = pendingOrderId;
+      _shouldAutoVerifyPendingWalletOrder = true;
+    });
+  }
+
+  Future<void> _persistPendingWalletOrder(String? orderId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final trimmedOrderId = orderId?.trim() ?? '';
+    if (trimmedOrderId.isEmpty) {
+      await prefs.remove(_pendingWalletOrderStorageKey);
+      return;
+    }
+
+    await prefs.setString(_pendingWalletOrderStorageKey, trimmedOrderId);
+  }
+
+  Future<void> _closeCashfreeCheckoutIfPossible() async {
+    if (kIsWeb) {
+      return;
+    }
+
+    try {
+      if (await supportsCloseForLaunchMode(LaunchMode.inAppBrowserView)) {
+        await closeInAppWebView();
+      }
+    } catch (_) {
+      // Ignore browser close errors; wallet verification still proceeds.
     }
   }
 
@@ -238,6 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         (responseData['status']?.toString() ?? '').trim().toUpperCase();
 
     if (verifyResponse.success) {
+      await _persistPendingWalletOrder(null);
       setState(() {
         _pendingWalletOrderId = null;
         _walletAmountController.text = '100';
@@ -270,6 +319,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
       }
       return;
+    }
+
+    final isTerminalFailure = const {
+      'FAILED',
+      'CANCELLED',
+      'USER_DROPPED',
+      'EXPIRED',
+      'TERMINATED',
+      'TERMINATION_REQUESTED',
+    }.contains(status);
+
+    if (isTerminalFailure) {
+      await _persistPendingWalletOrder(null);
+      setState(() {
+        _pendingWalletOrderId = null;
+        _shouldAutoVerifyPendingWalletOrder = false;
+      });
     }
 
     _showMessage(verifyResponse.message, isError: true);
@@ -329,6 +395,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     setState(() => _pendingWalletOrderId = orderId);
     _shouldAutoVerifyPendingWalletOrder = true;
+    await _persistPendingWalletOrder(orderId);
+
+    LaunchMode mobileLaunchMode = LaunchMode.externalApplication;
+    if (!kIsWeb) {
+      try {
+        if (await supportsLaunchMode(LaunchMode.inAppBrowserView)) {
+          mobileLaunchMode = LaunchMode.inAppBrowserView;
+        } else if (await supportsLaunchMode(LaunchMode.inAppWebView)) {
+          mobileLaunchMode = LaunchMode.inAppWebView;
+        }
+      } catch (_) {
+        mobileLaunchMode = LaunchMode.externalApplication;
+      }
+    }
 
     final opened = kIsWeb
         ? await launchUrl(
@@ -338,11 +418,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           )
         : await launchUrl(
             checkoutUri,
-            mode: LaunchMode.externalApplication,
+            mode: mobileLaunchMode,
+            browserConfiguration: const BrowserConfiguration(showTitle: true),
+            webViewConfiguration: const WebViewConfiguration(
+              enableJavaScript: true,
+              enableDomStorage: true,
+            ),
           );
 
     if (!opened) {
       _shouldAutoVerifyPendingWalletOrder = false;
+      await _persistPendingWalletOrder(null);
       _showMessage('Could not open Cashfree payment page.', isError: true);
       return;
     }
@@ -350,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _showMessage(
       kIsWeb
           ? 'Cashfree payment page opened in a new tab. After payment, return here and verify if needed.'
-          : 'Cashfree payment page opened in your browser. After payment, return to the app and wallet credit will be checked automatically.',
+          : 'Cashfree payment page opened inside the app. After payment, TotalFire should reopen and verify the wallet automatically.',
     );
   }
 
