@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { verifyUser } from "@/lib/auth";
-import { Cashfree } from "cashfree-pg";
 
-// @ts-ignore
-Cashfree.XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
-// @ts-ignore
-Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
-// @ts-ignore
-Cashfree.XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION" 
-  // @ts-ignore
-  ? Cashfree.CFEnvironment.PRODUCTION 
-  // @ts-ignore
-  : Cashfree.CFEnvironment.SANDBOX;
+import { Cashfree, CFEnvironment } from "cashfree-pg";
+
+const XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
+const XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
+const XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION"
+  ? CFEnvironment.PRODUCTION
+  : CFEnvironment.SANDBOX;
+
+const cf = new Cashfree(XEnvironment, XClientId, XClientSecret);
 
 export async function POST(request: Request) {
   const user = await verifyUser(request);
@@ -45,8 +43,10 @@ export async function POST(request: Request) {
       }
     };
 
-    // @ts-ignore
-    const response = await Cashfree.PGCreateOrder("2023-08-01", orderRequest);
+    const response = await cf.PGCreateOrder(
+      "2023-08-01",
+      orderRequest
+    );
 
     return NextResponse.json({
       orderId: response.data.order_id,

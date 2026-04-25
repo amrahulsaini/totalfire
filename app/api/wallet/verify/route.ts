@@ -3,18 +3,16 @@ import pool from "@/lib/db";
 import { verifyUser } from "@/lib/auth";
 import { createUserNotification } from "@/lib/notifications";
 import type { RowDataPacket } from "mysql2";
-import { Cashfree } from "cashfree-pg";
 
-// @ts-ignore
-Cashfree.XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
-// @ts-ignore
-Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
-// @ts-ignore
-Cashfree.XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION"
-  // @ts-ignore
-  ? Cashfree.CFEnvironment.PRODUCTION
-  // @ts-ignore
-  : Cashfree.CFEnvironment.SANDBOX;
+import { Cashfree, CFEnvironment } from "cashfree-pg";
+
+const XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
+const XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
+const XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION"
+  ? CFEnvironment.PRODUCTION
+  : CFEnvironment.SANDBOX;
+
+const cf = new Cashfree(XEnvironment, XClientId, XClientSecret);
 
 export async function POST(request: Request) {
   const user = await verifyUser(request);
@@ -29,8 +27,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    // @ts-ignore
-    const response = await Cashfree.PGOrderFetchPayments("2023-08-01", cashfreeOrderId);
+    const response = await cf.PGOrderFetchPayments(
+      "2023-08-01",
+      cashfreeOrderId
+    );
     const paymentsList = response.data;
 
     // Find a successful payment
