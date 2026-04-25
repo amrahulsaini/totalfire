@@ -12,6 +12,7 @@ import {
 export default function Home() {
   const featuredProducts = storeProducts.slice(0, 4);
   const spotlightProducts = storeProducts.slice(4, 8);
+  const budgetAccessories = storeProducts.filter((product) => product.price <= 75).slice(0, 3);
 
   return (
     <StoreShell>
@@ -70,6 +71,23 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProducts.map((product) => (
+              <ProductCard key={product.slug} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-20 px-6 sm:px-12 lg:px-24 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-extrabold mb-4 text-gray-900">Budget Add-Ons</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Quick low-cost accessories for users who want simple earphones and phone cooling gear from ₹25 to ₹75.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {budgetAccessories.map((product) => (
               <ProductCard key={product.slug} product={product} />
             ))}
           </div>

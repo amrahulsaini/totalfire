@@ -16,7 +16,8 @@ interface AppStats {
 
 const MIN_ACTIVE_USERS = 3000;
 const MIN_DOWNLOADS = 10000;
-const WEBSITE_APK_FILE_NAME = "totalfire-v1.0.2.apk";
+const WEBSITE_APK_VERSION = "1.0.3";
+const WEBSITE_APK_FILE_NAME = `totalfire-v${WEBSITE_APK_VERSION}.apk`;
 
 export default function HeroSection({ basePath = "" }: HeroSectionProps) {
   const [stats, setStats] = useState<AppStats>({
@@ -120,12 +121,16 @@ export default function HeroSection({ basePath = "" }: HeroSectionProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l-4-4m4 4l4-4" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
               </svg>
-              Download APK v1.0.2
+              {`Download APK v${WEBSITE_APK_VERSION}`}
             </Link>
             <Link href={portalHref("/modes")} className="outline-btn text-lg !py-4 !px-10">
               Browse Tournaments
             </Link>
           </div>
+          <p className="animate-fade-in-up stagger-4 mt-4 text-sm"
+            style={{ color: "var(--text-secondary)" }}>
+            Official signed Android APK. Package: <strong>com.totalfire.totalfire</strong>. Version: <strong>{WEBSITE_APK_VERSION}</strong>.
+          </p>
 
           {/* Stats */}
           <div className="animate-fade-in-up stagger-5 mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-12">

@@ -40,12 +40,12 @@ function getFileNameFromUrl(url: string) {
 }
 
 const DEFAULT_SETTINGS: UpdateSettings = {
-  latestVersion: "1.0.2",
-  minSupportedVersion: "1.0.2",
+  latestVersion: "1.0.3",
+  minSupportedVersion: "1.0.3",
   forceUpdate: false,
   title: "Update Required",
   message: "A new version of TotalFire is available. Please update to continue.",
-  downloadUrl: "https://totalfire.in/downloads/totalfire-v1.0.2.apk",
+  downloadUrl: "https://totalfire.in/downloads/totalfire-v1.0.3.apk",
 };
 
 export default function AdminAppUpdatePage() {
@@ -283,7 +283,7 @@ export default function AdminAppUpdatePage() {
                   className="admin-input"
                   value={form.downloadUrl}
                   onChange={(event) => setForm((current) => ({ ...current, downloadUrl: event.target.value }))}
-                  placeholder="https://totalfire.in/downloads/totalfire-v1.0.2.apk"
+                  placeholder="https://totalfire.in/downloads/totalfire-v1.0.3.apk"
                 />
               </label>
 

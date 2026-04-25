@@ -29,12 +29,12 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `app_update_settings` (
   `id` int(11) NOT NULL,
-  `latest_version` varchar(30) NOT NULL DEFAULT '1.0.0',
-  `min_supported_version` varchar(30) NOT NULL DEFAULT '1.0.0',
+  `latest_version` varchar(30) NOT NULL DEFAULT '1.0.3',
+  `min_supported_version` varchar(30) NOT NULL DEFAULT '1.0.3',
   `force_update` tinyint(1) NOT NULL DEFAULT 0,
   `title` varchar(120) NOT NULL DEFAULT 'Update Required',
   `message` varchar(500) NOT NULL DEFAULT 'A new version of TotalFire is available. Please update to continue.',
-  `download_url` varchar(255) NOT NULL DEFAULT 'https://totalfire.in/downloads/totalfire-latest.apk',
+  `download_url` varchar(255) NOT NULL DEFAULT 'https://totalfire.in/downloads/totalfire-v1.0.3.apk',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;

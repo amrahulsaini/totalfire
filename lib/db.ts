@@ -215,12 +215,12 @@ pool
   .query(
     `CREATE TABLE IF NOT EXISTS app_update_settings (
       id INT PRIMARY KEY,
-      latest_version VARCHAR(30) NOT NULL DEFAULT '1.0.2',
-      min_supported_version VARCHAR(30) NOT NULL DEFAULT '1.0.2',
+      latest_version VARCHAR(30) NOT NULL DEFAULT '1.0.3',
+      min_supported_version VARCHAR(30) NOT NULL DEFAULT '1.0.3',
       force_update TINYINT(1) NOT NULL DEFAULT 0,
       title VARCHAR(120) NOT NULL DEFAULT 'Update Required',
       message VARCHAR(500) NOT NULL DEFAULT 'A new version of TotalFire is available. Please update to continue.',
-      download_url VARCHAR(255) NOT NULL DEFAULT 'https://totalfire.in/downloads/totalfire-v1.0.2.apk',
+      download_url VARCHAR(255) NOT NULL DEFAULT 'https://totalfire.in/downloads/totalfire-v1.0.3.apk',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`
@@ -241,12 +241,12 @@ pool
       download_url
     ) VALUES (
       1,
-      '1.0.2',
-      '1.0.2',
+      '1.0.3',
+      '1.0.3',
       0,
       'Update Required',
       'A new version of TotalFire is available. Please update to continue.',
-      'https://totalfire.in/downloads/totalfire-v1.0.2.apk'
+      'https://totalfire.in/downloads/totalfire-v1.0.3.apk'
     )
     ON DUPLICATE KEY UPDATE id = id`
   )
@@ -257,11 +257,12 @@ pool
 pool
   .query(
     `UPDATE app_update_settings
-     SET download_url = 'https://totalfire.in/downloads/totalfire-v1.0.2.apk'
+     SET download_url = 'https://totalfire.in/downloads/totalfire-v1.0.3.apk'
      WHERE id = 1
        AND download_url IN (
          'https://totalfire.in/downloads/totalfire-latest.apk',
-         'https://totalfire.in/downloads/totalfire-v1.0.1.apk'
+         'https://totalfire.in/downloads/totalfire-v1.0.1.apk',
+         'https://totalfire.in/downloads/totalfire-v1.0.2.apk'
        )`
   )
   .catch(() => {
@@ -271,11 +272,11 @@ pool
 pool
   .query(
     `UPDATE app_update_settings
-     SET latest_version = '1.0.2',
-         min_supported_version = '1.0.2'
+     SET latest_version = '1.0.3',
+         min_supported_version = '1.0.3'
      WHERE id = 1
-       AND latest_version = '1.0.1'
-       AND min_supported_version = '1.0.1'`
+       AND latest_version IN ('1.0.1', '1.0.2')
+       AND min_supported_version IN ('1.0.1', '1.0.2')`
   )
   .catch(() => {
     // Non-fatal — preserve startup if table is not ready yet.
