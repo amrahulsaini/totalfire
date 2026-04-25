@@ -85,9 +85,9 @@ export default async function ShopPage({
 
         <div className="flex flex-wrap gap-4 text-sm font-medium text-gray-500 mb-8 pb-4 border-b border-gray-100">
           <span>{visibleProducts.length} products visible</span>
-          <span className="hidden sm:inline">•</span>
+          <span className="hidden sm:inline"></span>
           <span>Inventory value: {formatINR(totalInventoryValue)}</span>      
-          <span className="hidden sm:inline">•</span>
+          <span className="hidden sm:inline"></span>
           <span>Prices shown in INR</span>
         </div>
 

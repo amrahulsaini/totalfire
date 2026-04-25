@@ -113,7 +113,7 @@ export default async function ProductDetailPage({
                 <ul className="space-y-2">
                   {product.features.map((feature) => (
                     <li key={feature} className="flex gap-2 items-start">
-                      <span className="text-orange-500 font-bold mt-0.5">•</span>
+                      <span className="text-orange-500 font-bold mt-0.5"></span>
                       <span className="text-gray-700 leading-tight">{feature}</span>
                     </li>
                   ))}
@@ -125,7 +125,7 @@ export default async function ProductDetailPage({
                 <ul className="space-y-2">
                   {product.specs.map((spec) => (
                     <li key={spec} className="flex gap-2 items-start">
-                      <span className="text-gray-300 font-bold mt-0.5">•</span>
+                      <span className="text-gray-300 font-bold mt-0.5"></span>
                       <span className="text-gray-700 leading-tight">{spec}</span>
                     </li>
                   ))}

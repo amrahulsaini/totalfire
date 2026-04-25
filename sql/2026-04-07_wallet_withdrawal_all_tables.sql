@@ -47,11 +47,11 @@ CREATE TABLE IF NOT EXISTS withdrawal_requests (
   INDEX idx_withdraw_user_created (user_id, created_at)
 );
 
--- 4) Gateway-level payment tracking (Razorpay order/payment lifecycle)
+-- 4) Gateway-level payment tracking (Cashfree order/payment lifecycle)
 CREATE TABLE IF NOT EXISTS wallet_payment_transactions (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
-  provider ENUM('razorpay') NOT NULL DEFAULT 'razorpay',
+  provider ENUM('cashfree', 'razorpay') NOT NULL DEFAULT 'cashfree',
   gateway_order_id VARCHAR(100) NOT NULL,
   gateway_payment_id VARCHAR(100) DEFAULT NULL,
   gateway_signature VARCHAR(255) DEFAULT NULL,
