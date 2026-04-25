@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       }
     };
 
+    // @ts-ignore
     const response = await Cashfree.PGCreateOrder("2023-08-01", orderRequest);
 
     return NextResponse.json({

@@ -29,6 +29,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    // @ts-ignore
     const response = await Cashfree.PGOrderFetchPayments("2023-08-01", cashfreeOrderId);
     const paymentsList = response.data;
 
