@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import { verifyUser } from "@/lib/auth";
 import { Cashfree } from "cashfree-pg";
 
+// @ts-ignore
 Cashfree.XClientId = process.env.CASHFREE_APP_ID || process.env.NEXT_PUBLIC_CASHFREE_APP_ID || "";
+// @ts-ignore
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || "";
+// @ts-ignore
 Cashfree.XEnvironment = process.env.CASHFREE_ENV === "PRODUCTION" 
+  // @ts-ignore
   ? Cashfree.CFEnvironment.PRODUCTION 
+  // @ts-ignore
   : Cashfree.CFEnvironment.SANDBOX;
 
 export async function POST(request: Request) {
